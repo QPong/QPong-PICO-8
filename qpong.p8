@@ -47,12 +47,12 @@ function _init()
 	--court
 	court_left = 0
 	court_right = 127
-	court_top = 10
-	court_bottom = 127
+	court_top = 0
+	court_bottom = 80
 	--court center line
 	line_x = 63
-	line_y = 10
-	line_length = 4
+	line_y = 0
+	line_length = 1.5
 end
 
 function _draw()
@@ -66,7 +66,7 @@ function _draw()
 		line(line_x,line_y,line_x,line_y+line_length,5)
 		line_y += line_length*2
 	until line_y > court_bottom
-	line_y = 10 --reset
+	line_y = 0 --reset
 
     --ball
     rectfill(
