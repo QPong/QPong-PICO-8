@@ -11,26 +11,26 @@ scored = ""
 function _init()
     --variables
     player={
-        x = 8,
+        x = 117,
         y = 63,
-        c = 12,
-        w = 2,
-        h = 10,
+        color = 12,
+        width = 2,
+        height = 10,
         speed = 1
     }
     com={
-        x = 117,
+        x = 8,
         y = 63,
-        c = 8,
-        w = 2,
-        h = 10,
+        color = 8,
+        width = 2,
+        height = 10,
         speed = 0.75
     }
     ball={
         x = 63,
         y = 63,
-        c = 7,
-        w = 2,
+        color = 7,
+        width = 2,
         dx = 0.6,
         dy = flr(rnd(2))-0.5,
         speed = 1,
@@ -72,32 +72,32 @@ function _draw()
     rectfill(
         ball.x,
         ball.y,
-        ball.x + ball.w,
-        ball.y + ball.w,
-        ball.c
+        ball.x + ball.width,
+        ball.y + ball.width,
+        ball.color
     )
 
     --player
     rectfill(
         player.x,
         player.y,
-        player.x + player.w,
-        player.y + player.h,
-        player.c
+        player.x + player.width,
+        player.y + player.height,
+        player.color
     )
 
     --computer
     rectfill(
         com.x,
         com.y,
-        com.x + com.w,
-        com.y + com.h,
-        com.c
+        com.x + com.width,
+        com.y + com.height,
+        com.color
     )
 
     --scores
-    print(player_points,30,2,player.c)
-    print(com_points,95,2,com.c)
+    print(player_points,95,2,player.color)
+    print(com_points,30,2,com.color)
 
 end
 
@@ -108,20 +108,20 @@ function _update60()
         player.y -= player.speed
     end
     if btn(⬇️)
-    and flr(player.y) + player.h < court_bottom - 1 then
+    and flr(player.y) + player.height < court_bottom - 1 then
         player.y += player.speed
     end
 
     --computer controls
-    mid_com = com.y + (com.h/2)
+    mid_com = com.y + (com.height/2)
 
-    if ball.dx>0 then
+    if ball.dx<0 then
         if mid_com > ball.y
         and com.y>court_top+1 then
             com.y-=com.speed
         end
         if mid_com < ball.y
-        and com.y + com.h < court_bottom - 1 then
+        and com.y + com.height < court_bottom - 1 then
             com.y += com.speed
         end
     else
@@ -134,22 +134,22 @@ function _update60()
     end
 
     --collide with com
-    if ball.dx > 0
-    and ball.x + ball.w >= com.x
-    and ball.x + ball.w <= com.x + com.w
+    if ball.dx < 0
+    and ball.x + ball.width >= com.x
+    and ball.x + ball.width <= com.x + com.width
     and ball.y >= com.y
-    and ball.y + ball.w <= com.y + com.h
+    and ball.y + ball.width <= com.y + com.height
     then
         ball.dx = -(ball.dx + ball.speedup)
         sfx(0)
     end
 
     --collide with player
-    if ball.dx < 0
+    if ball.dx > 0
     and ball.x >= player.x
-    and ball.x <= player.x + player.w
+    and ball.x <= player.x + player.width
     and ball.y >= player.y
-    and ball.y + ball.w <= player.y + player.h
+    and ball.y + ball.width <= player.y + player.height
     then
         --control ball DY if hit and press up or down
         if btn(⬆️) then
@@ -174,7 +174,7 @@ function _update60()
     end
 
     --collide with court
-    if ball.y + ball.w >= court_bottom - 1
+    if ball.y + ball.width >= court_bottom - 1
     or ball.y <= court_top+1 then
         ball.dy = -ball.dy
         sfx(2)
