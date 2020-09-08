@@ -332,7 +332,19 @@ function _init()
         z = 2,
         h = 3
     }
-    gates={}
+    gates={
+		{"I", "I", "I", "I", "I", "I", "I", "Y"},
+		{"I", "X", "I", "I", "I", "I", "I", "I"},
+		{"Z", "I", "I", "I", "I", "I", "I", "H"}
+	}
+
+	-- Relative frequency of the measurement results
+	-- Obtained from simulator
+	freqs = {100, 0, 0, 0, 0, 0, 0, 0}
+
+	-- How many updates left does the paddle stays measured
+	measured_timer = 0
+
     cursor = {
         row=0,
         column=0,
@@ -405,10 +417,28 @@ function _draw()
     cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
     cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
     spr(cursor.sprite,cursor.x,cursor.y)
-    --gates
-    for g in all(gates) do
-        spr(g.type,g.x,g.y)
-    end
+
+    --TODO gates
+	for slot = 1, 8 do
+		for wire = 1, 3 do
+			local g = gates[wire][slot]
+			if g == "I" then
+				-- do nothing
+			else
+				local gnum
+				if g == "X" then gnum = 0
+				elseif g == "Y" then gnum = 1
+				elseif g == "Z" then gnum = 2
+				elseif g == "H" then gnum = 3
+				end
+
+				spr(gnum,
+					qubit_line.x + (slot - 1) * qubit_line.separation - 4,
+					qubit_line.y + (wire - 1) * qubit_line.separation - 4)
+			end
+
+		end
+	end
     
     --ball
     rectfill(
@@ -461,14 +491,17 @@ function _update60()
     and cursor.column < 7  then
         cursor.column += 1
     end
-    if btnp(5) then
+    if btnp(4) then
+		--TODO rewrite this
         local gate={}
         add(gates,gate)
         gate.x=cursor.x
         gate.y=cursor.y
         gate.type=gate_type.x
     end
-	--missing 4
+	if btnp(5) then
+		--TODO delete gate
+	end
     --computer controls
     mid_com = com.y + (com.height/2)
 
