@@ -333,9 +333,9 @@ function _init()
         h = 3
     }
     gates={
-		{"I", "I", "I", "I", "I", "I", "I", "Y"},
-		{"I", "X", "I", "I", "I", "I", "I", "I"},
-		{"Z", "I", "I", "I", "I", "I", "I", "H"}
+		{"I", "I", "I", "I", "I", "I", "I", "I"},
+		{"I", "I", "I", "I", "I", "I", "I", "I"},
+		{"I", "I", "I", "I", "I", "I", "I", "I"}
 	}
 
 	-- Relative frequency of the measurement results
@@ -418,7 +418,6 @@ function _draw()
     cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
     spr(cursor.sprite,cursor.x,cursor.y)
 
-    --TODO gates
 	for slot = 1, 8 do
 		for wire = 1, 3 do
 			local g = gates[wire][slot]
@@ -439,6 +438,8 @@ function _draw()
 
 		end
 	end
+
+
     
     --ball
     rectfill(
