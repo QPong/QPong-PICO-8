@@ -328,7 +328,7 @@ function newgame()
         y = 20 + rnd(40),
         color = 7,
         width = 2,
-        dx = 0.6,
+        dx = -0.6,
         dy = rnd()-0.5,
         speed = 1,
         speedup = 0.05
@@ -414,7 +414,7 @@ function newRound()
         y = 20 + rnd(40),
         color = 7,
         width = 2,
-        dx = 0.6,
+        dx = -0.6,
         dy = rnd()-0.5,
         speed = 1,
         speedup = 0.05
