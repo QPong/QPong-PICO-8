@@ -562,7 +562,7 @@ function _draw()
 
 		--scores
 		print(player_points,66,2,player.color)
-		print(com_points,54,2,com.color)
+		print(com_points,58,2,com.color)
 	end
 
 
@@ -695,7 +695,25 @@ function _update60()
 				com.y += com.speed
 			end
 		end
-
+  	--score
+		if ball.x > court.right then
+			com_points += 1
+			scored = "com"
+			if com_points < 7 then
+				newRound()
+			else
+				ended = true
+			end
+		end
+		if ball.x < court.left then
+			player_points += 1
+			scored = "player"
+			if player_points < 7 then
+				newRound()
+			else
+				ended = true
+			end
+		end
     --collide with court
 		if ball.y + ball.width >= court.bottom - 1
 		or ball.y <= court.top+1 then
@@ -706,7 +724,7 @@ function _update60()
 		--collide with com
 		if ball.dx < 0
     and ball.x <= com.x+com.width
-    and ball.x+ball.width<=com.x+com.width
+    and ball.x >com.x 
 		and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
 		then
 			ball.dy -= ball.speedup*2
@@ -736,7 +754,7 @@ function _update60()
 		--collide with player
 		if ball.dx > 0
     and ball.x <= player.x+player.width
-		and ball.x+ball.width >= player.x
+		and ball.x> player.x
 		and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
 		then
 			ball.dy -= ball.speedup*2
@@ -746,25 +764,7 @@ function _update60()
 		end
 
 
-		--score
-		if ball.x > court.right then
-			com_points += 1
-			scored = "com"
-			if com_points < 7 then
-				newRound()
-			else
-				ended = true
-			end
-		end
-		if ball.x < court.left then
-			player_points += 1
-			scored = "player"
-			if player_points < 7 then
-				newRound()
-			else
-				ended = true
-			end
-		end
+
 
 		--ball movement
 		ball.x += ball.dx
