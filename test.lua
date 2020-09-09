@@ -332,6 +332,7 @@ function meas_prob()
     end
 end
 
+simCir()
 for key,value in pairs(probs) do
     print(value)
 end
