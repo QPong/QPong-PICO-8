@@ -587,6 +587,7 @@ function _update60()
       else
         gates[cursor.row+1][cursor.column+1]=2
       end
+	  simCir()
     end
     if btnp(5) then 
       cur_gate = gates[cursor.row+1][cursor.column+1]
@@ -595,25 +596,8 @@ function _update60()
       else
         gates[cursor.row+1][cursor.column+1]=5
       end
+	  simCir()
     end
-    --keep old version
-    [[
-    if btnp(4) then
-      local numPress = gates[cursor.row+1][cursor.column+1]
-      numPress = numPress%5
-      numPress+=1
-      gates[cursor.row+1][cursor.column+1] = numPress
-      --construct circuit
-      simCir()
-    end
-
-    if btnp(5) then
-      --TODO delete gate
-      gates[cursor.row+1][cursor.column+1] = 1 
-      simCir()
-
-	  end
-    ]]
     --computer controls
     mid_com = com.y + (com.height/2)
 
