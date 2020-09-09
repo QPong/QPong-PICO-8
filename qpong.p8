@@ -515,8 +515,7 @@ function simCir()
           qc.z(wires-1)
        
         elseif (gates[wires][slots] == 5) then 
-          qc.h(wires-1)
-        
+          qc.h(wires-1)  
         end 
       end          
     end
@@ -580,6 +579,24 @@ function _update60()
     and cursor.column < 7  then
         cursor.column += 1
     end
+    if btnp(4) then 
+      cur_gate = gates[cursor.row+1][cursor.column+1]
+      if cur_gate==2 then
+        gates[cursor.row+1][cursor.column+1]=1
+      else
+        gates[cursor.row+1][cursor.column+1]=2
+      end
+    end
+    if btnp(5) then 
+      cur_gate = gates[cursor.row+1][cursor.column+1]
+      if cur_gate==5 then
+        gates[cursor.row+1][cursor.column+1]=1
+      else
+        gates[cursor.row+1][cursor.column+1]=5
+      end
+    end
+    --keep old version
+    [[
     if btnp(4) then
       local numPress = gates[cursor.row+1][cursor.column+1]
       numPress = numPress%5
@@ -595,6 +612,7 @@ function _update60()
       simCir()
 
 	  end
+    ]]
     --computer controls
     mid_com = com.y + (com.height/2)
 
