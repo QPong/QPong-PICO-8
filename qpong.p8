@@ -341,9 +341,9 @@ function _init()
       H=5
     }
     gates={
-		{1,5,1,1,1,1,1,4},
 		{1,1,1,1,1,1,1,1},
-		{2,1,1,1,1,1,1,3}
+		{1,1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1,1}
 	}
 	-- Relative frequency of the measurement results
 	-- Obtained from simulator
@@ -520,15 +520,21 @@ function simCir()
         end 
       end          
     end
+
+	print("about to measure")
+
     qc.measure(0,0)
     qc.measure(1,1)
     qc.measure(2,2)
     
     result = simulate(qc,'expected_counts',1)
+
+
+
     --print(result['000'])
     for key, value in pairs(result) do
       print(key,value)
-      idx = tonumber(key,2) + 1
+      idx = tonum('0b'..key) + 1
       probs[idx]=value
     end  
 end
