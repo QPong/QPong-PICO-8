@@ -563,7 +563,6 @@ function _update60()
         gate.y=cursor.y
         gate.type=gate_type.x ]]
 
-    end
 	if btnp(5) then
 		--TODO delete gate
     gates[cursor.row+1][cursor.column+1] = 1 
