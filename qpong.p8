@@ -403,7 +403,7 @@ function newRound()
 
 	if scored == "player" then
 		ball={
-			x = 20,
+			x = 30,
 			y = 30 + rnd(5),
 			color = 7,
 			width = 2,
@@ -414,7 +414,7 @@ function newRound()
 		}
 	else
 		ball={
-			x = 108,
+			x = 98,
 			y = 30 + rnd(5),
 			color = 7,
 			width = 2,
