@@ -521,8 +521,8 @@ function _draw()
 		)
 
 		--scores
-		print(player_points,95,2,player.color)
-		print(com_points,30,2,com.color)
+		print(player_points,66,2,player.color)
+		print(com_points,54,2,com.color)
 	end
 
 
