@@ -297,6 +297,7 @@ end
 started=false
 ended=false
 scored = ""
+blink_timer = 0
 
 function newgame()
 	started = true
@@ -424,7 +425,9 @@ function _draw()
     cls()
 
 	if not started then
-		print("press z", 50, 80, 10) -- TODO make blink
+		if blink_timer < 40 then
+			print("press z", 50, 80, 10)
+		end
 		for i = 0,2 do
 		  --print IBM logo
 		  spr(i+140,i*8+0,112)
@@ -609,6 +612,7 @@ function meas_prob()
 end
 
 function _update60()
+	blink_timer = (blink_timer + 1) % 60
     --player controls
     
 	if (not started) or ended then
