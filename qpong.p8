@@ -294,11 +294,16 @@ end
 
 -- QPong
 
+started=false
+ended=false
 player_points = 0
 com_points = 0
 scored = ""
 
-function _init()
+function newgame()
+	started = true
+	ended = false
+
     --variables
     counter=0
     player={
@@ -402,103 +407,126 @@ function _init()
     }
 end
 
+function newRound()
+    ball={
+        x = 63,
+        y = 63,
+        color = 7,
+        width = 2,
+        dx = 0.6,
+        dy = flr(rnd(2))-0.5,
+        speed = 1,
+        speedup = 0.05
+    }
+end
+
 function _draw()
     cls()
 
-    --court
-    rect(court.left,court.top,court.right,court.bottom,court.color)
+	if not started then
+		print("QPONG", 30, 70, 10) --TODO nice title pls
+		print("Press Z to start", 30, 120, 10)
+	elseif ended then
+		print("GAMEOVER", 30, 70, 10) --TODO nice title pls
+		print("Press Z to restart", 30, 120, 10)
+	else --game is running
+		--court
+		rect(court.left,court.top,court.right,court.bottom,court.color)
 
-	--dashed center line
-	repeat
-		line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
-		dash_line.y += dash_line.length*2
-	until dash_line.y > court.bottom-1
-	dash_line.y = 0 --reset
+		--dashed center line
+		repeat
+			line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
+			dash_line.y += dash_line.length*2
+		until dash_line.y > court.bottom-1
+		dash_line.y = 0 --reset
 
-    --circuit composer
-    rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
-    --qubit lines
-	repeat
-		line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
-        qubit_line.y += qubit_line.separation
-	until qubit_line.y > composer.bottom-1
-	qubit_line.y = 90 --reset
+		--circuit composer
+		rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
+		--qubit lines
+		repeat
+			line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
+			qubit_line.y += qubit_line.separation
+		until qubit_line.y > composer.bottom-1
+		qubit_line.y = 90 --reset
 
-	for slot = 1, 8 do
-		for wire = 1, 3 do
-			gnum = gates[wire][slot] - 2
-			if gnum != -1 then
-				spr(gnum,
-					qubit_line.x + (slot - 1) * qubit_line.separation - 4,
-					qubit_line.y + (wire - 1) * qubit_line.separation - 4)
+		for slot = 1, 8 do
+			for wire = 1, 3 do
+				gnum = gates[wire][slot] - 2
+				if gnum != -1 then
+					spr(gnum,
+						qubit_line.x + (slot - 1) * qubit_line.separation - 4,
+						qubit_line.y + (wire - 1) * qubit_line.separation - 4)
+				end
 			end
 		end
-	end
 
-    --cursor
-    cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
-    cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
-    spr(cursor.sprite,cursor.x,cursor.y)
+		--cursor
+		cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
+		cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
+		spr(cursor.sprite,cursor.x,cursor.y)
 
-    for x=0,7 do
-        spr(6,87,8*(x+1))
-        a=x%2
-        b=flr(x/2)%2
-        c=flr(x/4)%2
-        spr(c+4,95,8*(x+1))
-        spr(b+4,103,8*(x+1))
-        spr(a+4,111,8*(x+1))
-        spr(7,119,8*(x+1))
-    end
-
-    --player
-	for y=0,7 do
-		local color
-		local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
-		if prob > .99 then
-			color = 7
-		elseif prob > .49 then
-			color = 6
-		elseif prob > .24 then
-			color = 13
-		elseif prob > .11 then
-			color = 5
-		else
-			color = 0
+		for x=0,7 do
+			spr(6,87,8*(x+1))
+			a=x%2
+			b=flr(x/2)%2
+			c=flr(x/4)%2
+			spr(c+4,95,8*(x+1))
+			spr(b+4,103,8*(x+1))
+			spr(a+4,111,8*(x+1))
+			spr(7,119,8*(x+1))
 		end
-		
+
+		--player
+		for y=0,7 do
+			local color
+			local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
+			if prob > .99 then
+				color = 7
+			elseif prob > .49 then
+				color = 6
+			elseif prob > .24 then
+				color = 13
+			elseif prob > .11 then
+				color = 5
+			else
+				color = 0
+			end
+			
+			rectfill(
+				player.x,
+				8 * ( y + 1 ),
+				player.x + player.width,
+				8 * ( y + 1 ) + player.height,
+				color
+			)
+		end
+
+		--ball
 		rectfill(
-			player.x,
-			8 * ( y + 1 ),
-			player.x + player.width,
-			8 * ( y + 1 ) + player.height,
-			color
+			ball.x,
+			ball.y,
+			ball.x + ball.width,
+			ball.y + ball.width,
+			ball.color
 		)
+
+		--computer
+		rectfill(
+			com.x,
+			com.y,
+			com.x + com.width,
+			com.y + com.height,
+			com.color
+		)
+
+		--scores
+		print(player_points,95,2,player.color)
+		print(com_points,30,2,com.color)
 	end
 
-    --ball
-    rectfill(
-        ball.x,
-        ball.y,
-        ball.x + ball.width,
-        ball.y + ball.width,
-        ball.color
-    )
-
-    --computer
-    rectfill(
-        com.x,
-        com.y,
-        com.x + com.width,
-        com.y + com.height,
-        com.color
-    )
-
-    --scores
-    print(player_points,95,2,player.color)
-    print(com_points,30,2,com.color)
 
 end
+
 
 function simCir()
     qc = QuantumCircuit()
@@ -564,140 +592,148 @@ end
 function _update60()
     --player controls
     
-    if btnp(2)
-    and cursor.row > 0 then
-        cursor.row -= 1
-    end
-    if btnp(3)
-    and cursor.row < 2 then
-        cursor.row += 1
-    end
-    if btnp(0)
-    and cursor.column > 0 then
-        cursor.column -= 1
-    end
-    if btnp(1)
-    and cursor.column < 7  then
-        cursor.column += 1
-    end
-    if btnp(4) then 
-      cur_gate = gates[cursor.row+1][cursor.column+1]
-      if cur_gate==2 then
-        gates[cursor.row+1][cursor.column+1]=1
-      else
-        gates[cursor.row+1][cursor.column+1]=2
-      end
-	  simCir()
-    end
-    if btnp(5) then 
-      cur_gate = gates[cursor.row+1][cursor.column+1]
-      if cur_gate==5 then
-        gates[cursor.row+1][cursor.column+1]=1
-      else
-        gates[cursor.row+1][cursor.column+1]=5
-      end
-	  simCir()
-    end
-    --computer controls
-    mid_com = com.y + (com.height/2)
+	if (not started) or ended then
+		if btnp(4) then
+			newgame()
+		end
+	else
+		if btnp(2)
+		and cursor.row > 0 then
+			cursor.row -= 1
+		end
+		if btnp(3)
+		and cursor.row < 2 then
+			cursor.row += 1
+		end
+		if btnp(0)
+		and cursor.column > 0 then
+			cursor.column -= 1
+		end
+		if btnp(1)
+		and cursor.column < 7  then
+			cursor.column += 1
+		end
+		if btnp(4) then 
+		  cur_gate = gates[cursor.row+1][cursor.column+1]
+		  if cur_gate==2 then
+			gates[cursor.row+1][cursor.column+1]=1
+		  else
+			gates[cursor.row+1][cursor.column+1]=2
+		  end
+		  simCir()
+		end
+		if btnp(5) then 
+		  cur_gate = gates[cursor.row+1][cursor.column+1]
+		  if cur_gate==5 then
+			gates[cursor.row+1][cursor.column+1]=1
+		  else
+			gates[cursor.row+1][cursor.column+1]=5
+		  end
+		  simCir()
+		end
 
-    if ball.dx<0 then
-        if mid_com > ball.y
-        and com.y>court.top+1 then
-            com.y-=com.speed
-        end
-        if mid_com < ball.y
-        and com.y + com.height < court.bottom - 1 then
-            com.y += com.speed
-        end
-    else
-        if mid_com > 73 then
-            com.y -= com.speed
-        end
-        if mid_com < 53 then
-            com.y += com.speed
-        end
-    end
 
-    --collide with com
-    if ball.dx < 0
-    and ball.x + ball.width >= com.x
-    and ball.x + ball.width <= com.x + com.width
-    and ball.y >= com.y
-    and ball.y + ball.width <= com.y + com.height
-    then
-        ball.dx = -(ball.dx + ball.speedup)
-        sfx(0)
-    end
+		--computer controls
+		mid_com = com.y + (com.height/2)
 
-    --TODO: when ball collide on edge--> measure
-    --UNTEST
-    if ball.x > court.edge and counter==0 then
-      counter=30
-      meas_prob()
-      
-    elseif ball.x < court.edge and counter > 0 then
-      counter-=1
-      if counter==0 then
-        simCir()
-      end
-    end
-    ------------------------
+		if ball.dx<0 then
+			if mid_com > ball.y
+			and com.y>court.top+1 then
+				com.y-=com.speed
+			end
+			if mid_com < ball.y
+			and com.y + com.height < court.bottom - 1 then
+				com.y += com.speed
+			end
+		else
+			if mid_com > 73 then
+				com.y -= com.speed
+			end
+			if mid_com < 53 then
+				com.y += com.speed
+			end
+		end
 
-    --collide with player
-    if ball.dx > 0
-    and ball.x >= player.x
-    and ball.x <= player.x + player.width
-    and ball.y >= player.y
-    and ball.y + ball.width <= player.y + player.height
-    then
-        ball.dy -= ball.speedup*2
-        --control ball DY if hit and press up or down
-        [[
-        if btn(⬆️) then
-            if ball.dy > 0 then
-                ball.dy = -ball.dy
-                ball.dy -= ball.speedup * 2
-            else
-                ball.dy -= ball.speedup * 2
-            end
-        end
-        if btn(⬇️) then
-            if ball.dy < 0 then
-                ball.dy = -ball.dy
-                ball.dy += ball.speedup * 2
-            else
-                ball.dy += ball.speedup * 2
-            end
-        end
-        ]]
-        --flip ball DX and add speed
-        ball.dx = -(ball.dx - ball.speedup)
-        sfx(1)
-    end
+		--collide with com
+		if ball.dx < 0
+		and ball.x + ball.width >= com.x
+		and ball.x + ball.width <= com.x + com.width
+		and ball.y >= com.y
+		and ball.y + ball.width <= com.y + com.height
+		then
+			ball.dx = -(ball.dx + ball.speedup)
+			sfx(0)
+		end
 
-    --collide with court
-    if ball.y + ball.width >= court.bottom - 1
-    or ball.y <= court.top+1 then
-        ball.dy = -ball.dy
-        sfx(2)
-    end
+		--TODO: when ball collide on edge--> measure
+		--UNTEST
+		if ball.x > court.edge and counter==0 then
+		  counter=30
+		  meas_prob()
+		  
+		elseif ball.x < court.edge and counter > 0 then
+		  counter-=1
+		  if counter==0 then
+			simCir()
+		  end
+		end
+		------------------------
 
-    --score
-    if ball.x > court.right then
-        player_points += 1
-        scored = "player"
-        _init() --reset game
-    end
-    if ball.x < court.left then
-        com_points += 1
-        scored = "com"
-        _init() --reset game
-    end
+		--collide with player
+		if ball.dx > 0
+		and ball.x >= player.x
+		and ball.x <= player.x + player.width
+		and ball.y >= player.y
+		and ball.y + ball.width <= player.y + player.height
+		then
+			ball.dy -= ball.speedup*2
+			--control ball DY if hit and press up or down
+			[[
+			if btn(⬆️) then
+				if ball.dy > 0 then
+					ball.dy = -ball.dy
+					ball.dy -= ball.speedup * 2
+				else
+					ball.dy -= ball.speedup * 2
+				end
+			end
+			if btn(⬇️) then
+				if ball.dy < 0 then
+					ball.dy = -ball.dy
+					ball.dy += ball.speedup * 2
+				else
+					ball.dy += ball.speedup * 2
+				end
+			end
+			]]
+			--flip ball DX and add speed
+			ball.dx = -(ball.dx - ball.speedup)
+			sfx(1)
+		end
 
-    --ball movement
-    ball.x += ball.dx
-    ball.y += ball.dy
+		--collide with court
+		if ball.y + ball.width >= court.bottom - 1
+		or ball.y <= court.top+1 then
+			ball.dy = -ball.dy
+			sfx(2)
+		end
+
+		--score
+		if ball.x > court.right then
+			player_points += 1
+			scored = "player"
+			newRound() --reset game
+		end
+		if ball.x < court.left then
+			com_points += 1
+			scored = "com"
+			newRound() --reset game
+		end
+
+		--ball movement
+		ball.x += ball.dx
+		ball.y += ball.dy
+	end
 end
 
 __gfx__
