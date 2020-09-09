@@ -296,13 +296,13 @@ end
 
 started=false
 ended=false
-player_points = 0
-com_points = 0
 scored = ""
 
 function newgame()
 	started = true
 	ended = false
+	player_points = 0
+	com_points = 0
 
     --variables
     counter=0
@@ -352,7 +352,7 @@ function newgame()
 	}
 	-- Relative frequency of the measurement results
 	-- Obtained from simulator
-	probs = {0, 0, 0, 0, 0, 0, 0, 0}
+	probs = {1, 0, 0, 0, 0, 0, 0, 0}
   --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
   --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
 
