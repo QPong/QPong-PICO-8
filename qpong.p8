@@ -324,11 +324,11 @@ function newgame()
     }
     ball={
         x = 63,
-        y = 63,
+        y = 20 + rnd(40),
         color = 7,
         width = 2,
         dx = 0.6,
-        dy = flr(rnd(2))-0.5,
+        dy = rnd()-0.5,
         speed = 1,
         speedup = 0.05
     }
@@ -410,11 +410,11 @@ end
 function newRound()
     ball={
         x = 63,
-        y = 63,
+        y = 20 + rnd(40),
         color = 7,
         width = 2,
         dx = 0.6,
-        dy = flr(rnd(2))-0.5,
+        dy = rnd()-0.5,
         speed = 1,
         speedup = 0.05
     }
