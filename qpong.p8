@@ -497,7 +497,7 @@ function _draw()
 				player.x,
 				10 * y + 1,
 				player.x + player.width,
-				10 * y + 1 + player.height,
+				10 * y + player.height,
 				color
 			)
 		end
