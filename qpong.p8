@@ -682,15 +682,15 @@ function _update60()
 		local mid_com = com.y + (com.height/2)
 		local r = rnd()
 		if ball.y - mid_com > 0 then
-			if r < .7 then
+			if r < .6 then
 				com.speed = min(com.speed + .08, .6)
-			elseif r > .9 then
+			elseif r > .8 then
 				com.speed = max(com.speed - .08, -.6)
 			end
 		else
-			if r < .7 then
+			if r < .6 then
 				com.speed = max(com.speed - .08, -.6)
-			elseif r > .9 then
+			elseif r > .8 then
 				com.speed = min(com.speed + .08, .6)
 			end
 		end
