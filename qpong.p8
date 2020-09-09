@@ -323,16 +323,6 @@ function newgame()
         height = 10,
         speed = 0
     }
-    ball={
-        x = 63,
-        y = 20 + rnd(40),
-        color = 7,
-        width = 2,
-        dx = -0.6,
-        dy = rnd()-0.5,
-        speed = 1,
-        speedup = 0.05
-    }
     gate_type={
         x = 0,
         y = 1,
@@ -406,19 +396,34 @@ function newgame()
         separation=15,
         color=5
     }
+	newRound()
 end
 
 function newRound()
-    ball={
-        x = 63,
-        y = 20 + rnd(40),
-        color = 7,
-        width = 2,
-        dx = -0.6,
-        dy = rnd()-0.5,
-        speed = 1,
-        speedup = 0.05
-    }
+
+	if scored == "player" then
+		ball={
+			x = 20,
+			y = 30 + rnd(5),
+			color = 7,
+			width = 2,
+			dx = 0.6,
+			dy = rnd() - 0.5,
+			speed = 1,
+			speedup = 0.05
+		}
+	else
+		ball={
+			x = 108,
+			y = 30 + rnd(5),
+			color = 7,
+			width = 2,
+			dx = -0.6,
+			dy = rnd() - 0.5,
+			speed = 1,
+			speedup = 0.05
+		}
+	end
 end
 
 function _draw()
@@ -682,16 +687,16 @@ function _update60()
 		local mid_com = com.y + (com.height/2)
 		local r = rnd()
 		if ball.y - mid_com > 0 then
-			if r < .6 then
-				com.speed = min(com.speed + .08, .6)
-			elseif r > .8 then
-				com.speed = max(com.speed - .08, -.6)
+			if r < .5 then
+				com.speed = min(com.speed + .05, .6)
+			elseif r > .75 then
+				com.speed = max(com.speed - .05, -.6)
 			end
 		else
-			if r < .6 then
-				com.speed = max(com.speed - .08, -.6)
-			elseif r > .8 then
-				com.speed = min(com.speed + .08, .6)
+			if r < .5 then
+				com.speed = max(com.speed - .05, -.6)
+			elseif r > .75 then
+				com.speed = min(com.speed + .05, .6)
 			end
 		end
 
