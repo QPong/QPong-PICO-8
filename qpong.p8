@@ -506,16 +506,16 @@ function simCir()
     for slots = 1,8 do
       for wires = 1,3 do
        if (gates[wires][slots] == 2) then 
-          qc.x(j-1)
+          qc.x(wires-1)
         
-        elseif (gates[j][i] == 3) then 
-          qc.y(j-1)
+        elseif (gates[wires][slots] == 3) then 
+          qc.y(wires-1)
         
-        elseif (gates[j][i] == 4) then
-          qc.z(j-1)
+        elseif (gates[wires][slots] == 4) then
+          qc.z(wires-1)
        
-        elseif (gates[j][i] == 5) then 
-          qc.h(j-1)
+        elseif (gates[wires][slots] == 5) then 
+          qc.h(wires-1)
         
         end 
       end          
