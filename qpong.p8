@@ -332,15 +332,26 @@ function _init()
         z = 2,
         h = 3
     }
-    gates={
+    gate_seq={
+      I=1,
+      X=2,
+      Y=3,
+      Z=4,
+      H=5
+    }
+--[[     gates={
 		{"I", "I", "I", "I", "I", "I", "I", "Y"},
 		{"I", "X", "I", "I", "I", "I", "I", "I"},
 		{"Z", "I", "I", "I", "I", "I", "I", "H"}
+	} ]]
+    gates={
+		{1,1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1,1},
+		{1,1,1,1,1,1,1,1}
 	}
-
 	-- Relative frequency of the measurement results
 	-- Obtained from simulator
-	freqs = {100, 0, 0, 0, 0, 0, 0, 0}
+	probs = {0, 0, 0, 0, 0, 0, 0, 0}
 
 	-- How many updates left does the paddle stays measured
 	measured_timer = 0
@@ -473,8 +484,43 @@ function _draw()
 
 end
 
+function simCir()
+    qc = QuantumCircuit()
+    qc.set_registers(3,3)
+    for i = 1,8 do
+      for j = 1,3 do
+       if (gates[j][i] == 2) then 
+          qc.x(j-1)
+        
+        elseif (gates[j][i] == 3) then 
+          qc.y(j-1)
+        
+        elseif (gates[j][i] == 4) then
+          qc.z(j-1)
+       
+        elseif (gates[j][i] == 5) then 
+          qc.h(j-1)
+        
+        end 
+      end          
+    end
+    qc.measure(0,0)
+    qc.measure(1,1)
+    qc.measure(2,2)
+    
+    result = simulate(qc,'expected_counts',1)
+    --print(result['000'])
+    for key, value in pairs(result) do
+      print(key,value)
+      idx = tonumber(key,2)
+      probs[idx]=value
+    end  
+end
+
+
 function _update60()
     --player controls
+    
     if btnp(2)
     and cursor.row > 0 then
         cursor.row -= 1
@@ -492,15 +538,27 @@ function _update60()
         cursor.column += 1
     end
     if btnp(4) then
+      local numPress = gates[cursor.row+1][cursor.column+1]
+      numPress = numPress%5
+      numPress+=1
+      gates[cursor.row+1][cursor.column+1] = numPress
+      --construct circuit
+      simCir()
+    end
 		--TODO rewrite this
-        local gate={}
+    --Operator seq IXYZH
+--[[         local gate={}
         add(gates,gate)
         gate.x=cursor.x
         gate.y=cursor.y
-        gate.type=gate_type.x
+        gate.type=gate_type.x ]]
+
     end
 	if btnp(5) then
 		--TODO delete gate
+    gates[cursor.row+1][cursor.column+1] = 1 
+    simCir()
+
 	end
     --computer controls
     mid_com = com.y + (com.height/2)
@@ -541,7 +599,9 @@ function _update60()
     and ball.y >= player.y
     and ball.y + ball.width <= player.y + player.height
     then
+        ball.dy -= ball.speedup*2
         --control ball DY if hit and press up or down
+        [[
         if btn(⬆️) then
             if ball.dy > 0 then
                 ball.dy = -ball.dy
@@ -558,6 +618,7 @@ function _update60()
                 ball.dy += ball.speedup * 2
             end
         end
+        ]]
         --flip ball DX and add speed
         ball.dx = -(ball.dx - ball.speedup)
         sfx(1)
