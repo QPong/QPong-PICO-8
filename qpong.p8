@@ -339,15 +339,10 @@ function _init()
       Z=4,
       H=5
     }
---[[     gates={
-		{"I", "I", "I", "I", "I", "I", "I", "Y"},
-		{"I", "X", "I", "I", "I", "I", "I", "I"},
-		{"Z", "I", "I", "I", "I", "I", "I", "H"}
-	} ]]
     gates={
+		{1,5,1,1,1,1,1,4},
 		{1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1}
+		{2,1,1,1,1,1,1,3}
 	}
 	-- Relative frequency of the measurement results
 	-- Obtained from simulator
@@ -424,31 +419,22 @@ function _draw()
         qubit_line.y += qubit_line.separation
 	until qubit_line.y > composer.bottom-1
 	qubit_line.y = 90 --reset
-    --cursor
-    cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
-    cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
-    spr(cursor.sprite,cursor.x,cursor.y)
 
 	for slot = 1, 8 do
 		for wire = 1, 3 do
-			local g = gates[wire][slot]
-			if g == "I" then
-				-- do nothing
-			else
-				local gnum
-				if g == "X" then gnum = 0
-				elseif g == "Y" then gnum = 1
-				elseif g == "Z" then gnum = 2
-				elseif g == "H" then gnum = 3
-				end
-
+			gnum = gates[wire][slot] - 2
+			if gnum != -1 then
 				spr(gnum,
 					qubit_line.x + (slot - 1) * qubit_line.separation - 4,
 					qubit_line.y + (wire - 1) * qubit_line.separation - 4)
 			end
-
 		end
 	end
+
+    --cursor
+    cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
+    cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
+    spr(cursor.sprite,cursor.x,cursor.y)
 
     for x=0,7 do
         spr(6,87,8*(x+1))
