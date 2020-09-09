@@ -263,12 +263,13 @@ function simulate (qc, get, shots)
   end
 
 end
-probs = {0, 0, 0, 0, 0, 0, 0, 0}
+probs = {0.1, 0.5, 0.3, 0.1, 0, 0, 0, 0}
 gates={
 		{1,1,1,1,1,1,1,1},
 		{1,1,1,1,1,1,1,1},
 		{1,1,1,5,1,1,1,1}
 	}
+
 function simCir()
     qc = QuantumCircuit()
     qc.set_registers(3,3)
@@ -301,7 +302,41 @@ function simCir()
       probs[idx]=value
     end  
 end
-simCir()
+
+
+
+function meas_prob()
+    idx = -1
+    math.randomseed(os.time())
+    r=math.random()
+    --r =0.2
+    --print(r)
+    num =0
+    for i = 1,8 do
+        
+        if (r > probs[i]) then
+            num=r-probs[i]
+            r=num
+        
+        elseif (r<=probs[i]) then 
+            idx = i
+            break
+        end
+    end
+    for i = 1,8 do
+        if i==idx then
+            probs[i]=1.0
+        else
+            probs[i]=0.0
+        end
+    end
+end
+
 for key,value in pairs(probs) do
     print(value)
 end
+meas_prob()
+for key,value in pairs(probs) do
+    print(value)
+end
+    

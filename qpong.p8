@@ -300,6 +300,7 @@ scored = ""
 
 function _init()
     --variables
+    counter=0
     player={
         x = 117,
         y = 63,
@@ -346,7 +347,9 @@ function _init()
 	}
 	-- Relative frequency of the measurement results
 	-- Obtained from simulator
-	probs = {0.5, 1, 0, 0.25, 0.125, 0, 0, 0}
+	probs = {0, 0, 0, 0, 0, 0, 0, 0}
+  --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
+  --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
 
 	-- How many updates left does the paddle stays measured
 	measured_timer = 0
@@ -372,6 +375,7 @@ function _init()
         right=127,
         top=0,
         bottom=81,
+        edge=107, --when ball collide this line, measure the circuit
         color=5
     }
 	--court center line
@@ -499,9 +503,9 @@ end
 function simCir()
     qc = QuantumCircuit()
     qc.set_registers(3,3)
-    for i = 1,8 do
-      for j = 1,3 do
-       if (gates[j][i] == 2) then 
+    for slots = 1,8 do
+      for wires = 1,3 do
+       if (gates[wires][slots] == 2) then 
           qc.x(j-1)
         
         elseif (gates[j][i] == 3) then 
@@ -529,6 +533,33 @@ function simCir()
     end  
 end
 
+function meas_prob()
+    idx = -1
+    math.randomseed(os.time())
+    r=math.random()
+    --r =0.2
+    --print(r)
+    num =0
+    for i = 1,8 do
+        
+        if (r > probs[i]) then
+            num=r-probs[i]
+            r=num
+        
+        elseif (r<=probs[i]) then 
+            idx = i
+            break
+        end
+    end
+    for i = 1,8 do
+        if i==idx then
+            probs[i]=1.0
+        else
+            probs[i]=0.0
+        end
+    end
+    return idx
+end
 
 function _update60()
     --player controls
@@ -557,20 +588,13 @@ function _update60()
       --construct circuit
       simCir()
     end
-		--TODO rewrite this
-    --Operator seq IXYZH
---[[         local gate={}
-        add(gates,gate)
-        gate.x=cursor.x
-        gate.y=cursor.y
-        gate.type=gate_type.x ]]
 
-	if btnp(5) then
-		--TODO delete gate
-    gates[cursor.row+1][cursor.column+1] = 1 
-    simCir()
+    if btnp(5) then
+      --TODO delete gate
+      gates[cursor.row+1][cursor.column+1] = 1 
+      simCir()
 
-	end
+	  end
     --computer controls
     mid_com = com.y + (com.height/2)
 
@@ -602,6 +626,20 @@ function _update60()
         ball.dx = -(ball.dx + ball.speedup)
         sfx(0)
     end
+
+    --TODO: when ball collide on edge--> measure
+    --UNTEST
+    if ball.x > court.edge and counter==0 then
+      counter=30
+      meas_prob()
+      
+    elseif ball.x < court.edge and counter > 0 then
+      counter-=1
+      if counter==0 then
+        simCir()
+      end
+    end
+    ------------------------
 
     --collide with player
     if ball.dx > 0
