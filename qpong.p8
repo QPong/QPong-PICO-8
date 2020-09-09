@@ -614,7 +614,7 @@ function _update60()
 		and cursor.column < 7  then
 			cursor.column += 1
 		end
-		if btnp(4) then 
+		if btnp(5) then 
 		  cur_gate = gates[cursor.row+1][cursor.column+1]
 		  if cur_gate==2 then
 			gates[cursor.row+1][cursor.column+1]=1
@@ -623,7 +623,7 @@ function _update60()
 		  end
 		  simCir()
 		end
-		if btnp(5) then 
+		if btnp(4) then 
 		  cur_gate = gates[cursor.row+1][cursor.column+1]
 		  if cur_gate==5 then
 			gates[cursor.row+1][cursor.column+1]=1
@@ -707,13 +707,13 @@ function _update60()
 
 		--score
 		if ball.x > court.right then
-			player_points += 1
-			scored = "player"
+			com_points += 1
+			scored = "com"
 			newRound() --reset game
 		end
 		if ball.x < court.left then
-			com_points += 1
-			scored = "com"
+			player_points += 1
+			scored = "player"
 			newRound() --reset game
 		end
 
