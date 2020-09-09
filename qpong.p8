@@ -467,14 +467,14 @@ function _draw()
 		spr(cursor.sprite,cursor.x,cursor.y)
 
 		for x=0,7 do
-			spr(6,87,8*(x+1))
+			spr(6, 94, 10 * x + 2)
 			a=x%2
 			b=flr(x/2)%2
 			c=flr(x/4)%2
-			spr(c+4,95,8*(x+1))
-			spr(b+4,103,8*(x+1))
-			spr(a+4,111,8*(x+1))
-			spr(7,119,8*(x+1))
+			spr(c+4, 97, 10 * x + 2)
+			spr(b+4, 102, 10 * x + 2)
+			spr(a+4, 107, 10 * x + 2)
+			spr(7, 111, 10 * x + 2)
 		end
 
 		--player
@@ -495,9 +495,9 @@ function _draw()
 			
 			rectfill(
 				player.x,
-				8 * ( y + 1 ),
+				10 * y + 1,
 				player.x + player.width,
-				8 * ( y + 1 ) + player.height,
+				10 * y + 1 + player.height,
 				color
 			)
 		end
