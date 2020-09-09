@@ -522,7 +522,7 @@ function simCir()
     --print(result['000'])
     for key, value in pairs(result) do
       print(key,value)
-      idx = tonumber(key,2)
+      idx = tonumber(key,2) + 1
       probs[idx]=value
     end  
 end
