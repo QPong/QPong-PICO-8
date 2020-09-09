@@ -321,7 +321,7 @@ function newgame()
         color = 8,
         width = 2,
         height = 10,
-        speed = 0.3
+        speed = 0
     }
     ball={
         x = 63,
@@ -674,27 +674,27 @@ function _update60()
 		  simCir()
 		end
 
-
 		--computer controls
-		mid_com = com.y + (com.height/2)
+		com.y += com.speed
+		com.y = max(com.y, 1)
+		com.y = min(com.y, 70)
 
-		if ball.dx<0 then
-			if mid_com > ball.y
-			and com.y>court.top+1 then
-				com.y-=com.speed
-			end
-			if mid_com < ball.y
-			and com.y + com.height < court.bottom - 1 then
-				com.y += com.speed
+		local mid_com = com.y + (com.height/2)
+		local r = rnd()
+		if ball.y - mid_com > 0 then
+			if r < .7 then
+				com.speed = min(com.speed + .08, .6)
+			elseif r > .9 then
+				com.speed = max(com.speed - .08, -.6)
 			end
 		else
-			if mid_com > 73 then
-				com.y -= com.speed
-			end
-			if mid_com < 53 then
-				com.y += com.speed
+			if r < .7 then
+				com.speed = max(com.speed - .08, -.6)
+			elseif r > .9 then
+				com.speed = min(com.speed + .08, .6)
 			end
 		end
+
   	--score
 		if ball.x > court.right then
 			com_points += 1
