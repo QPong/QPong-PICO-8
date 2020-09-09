@@ -424,10 +424,11 @@ function _draw()
     cls()
 
 	if not started then
-		print("QPONG", 30, 70, 10) --TODO nice title pls
+		--Title screen
+		print("QPONG", 50, 70, 10)
 		print("Press Z to start", 30, 120, 10)
 	elseif ended then
-		print("GAMEOVER", 30, 70, 10) --TODO nice title pls
+		print("GAMEOVER", 50, 70, 10) --TODO nice title pls
 		print("Press Z to restart", 30, 120, 10)
 	else --game is running
 		--court
@@ -581,9 +582,9 @@ function meas_prob()
     end
     for i = 1,8 do
         if i==idx then
-            probs[i]=1.0
+            probs[i]=1
         else
-            probs[i]=0.0
+            probs[i]=0
         end
     end
     return idx
@@ -668,9 +669,14 @@ function _update60()
 		--TODO: when ball collide on edge--> measure
 		--UNTEST
 		if ball.x > court.edge and counter==0 then
-		  counter=30
-		  meas_prob()
-		  
+			counter=30
+			meas_prob()
+			for i=1,8 do
+				if probs[i] == 1 then
+					beg = 10 * (i - 1)
+					player.y = beg
+				end
+			end
 		elseif ball.x < court.edge and counter > 0 then
 		  counter-=1
 		  if counter==0 then
@@ -687,25 +693,6 @@ function _update60()
 		and ball.y + ball.width <= player.y + player.height
 		then
 			ball.dy -= ball.speedup*2
-			--control ball DY if hit and press up or down
-			[[
-			if btn(⬆️) then
-				if ball.dy > 0 then
-					ball.dy = -ball.dy
-					ball.dy -= ball.speedup * 2
-				else
-					ball.dy -= ball.speedup * 2
-				end
-			end
-			if btn(⬇️) then
-				if ball.dy < 0 then
-					ball.dy = -ball.dy
-					ball.dy += ball.speedup * 2
-				else
-					ball.dy += ball.speedup * 2
-				end
-			end
-			]]
 			--flip ball DX and add speed
 			ball.dx = -(ball.dx - ball.speedup)
 			sfx(1)
