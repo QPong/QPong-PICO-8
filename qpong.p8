@@ -351,7 +351,7 @@ function _init()
 	}
 	-- Relative frequency of the measurement results
 	-- Obtained from simulator
-	probs = {0, 0, 0, 0, 0, 0, 0, 0}
+	probs = {0.5, 1, 0, 0.25, 0.125, 0, 0, 0}
 
 	-- How many updates left does the paddle stays measured
 	measured_timer = 0
@@ -460,7 +460,32 @@ function _draw()
         spr(a+4,111,8*(x+1))
         spr(7,119,8*(x+1))
     end
-    
+
+    --player
+	for y=0,7 do
+		local color
+		local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
+		if prob > .99 then
+			color = 7
+		elseif prob > .49 then
+			color = 6
+		elseif prob > .24 then
+			color = 13
+		elseif prob > .11 then
+			color = 5
+		else
+			color = 0
+		end
+		
+		rectfill(
+			player.x,
+			8 * ( y + 1 ),
+			player.x + player.width,
+			8 * ( y + 1 ) + player.height,
+			color
+		)
+	end
+
     --ball
     rectfill(
         ball.x,
@@ -468,15 +493,6 @@ function _draw()
         ball.x + ball.width,
         ball.y + ball.width,
         ball.color
-    )
-
-    --player
-    rectfill(
-        player.x,
-        player.y,
-        player.x + player.width,
-        player.y + player.height,
-        player.color
     )
 
     --computer
