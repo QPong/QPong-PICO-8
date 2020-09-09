@@ -521,17 +521,12 @@ function simCir()
       end          
     end
 
-	print("about to measure")
-
     qc.measure(0,0)
     qc.measure(1,1)
     qc.measure(2,2)
     
     result = simulate(qc,'expected_counts',1)
 
-
-
-    --print(result['000'])
     for key, value in pairs(result) do
       print(key,value)
       idx = tonum('0b'..key) + 1
