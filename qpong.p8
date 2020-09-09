@@ -428,7 +428,11 @@ function _draw()
 		print("QPONG", 50, 70, 10)
 		print("Press Z to start", 30, 120, 10)
 	elseif ended then
-		print("GAMEOVER", 50, 70, 10) --TODO nice title pls
+		if scored == "player" then
+			print("YOU WIN!", 50, 70, 10) --TODO nice title pls
+		else
+			print("GAMEOVER", 50, 70, 10) --TODO nice title pls
+		end
 		print("Press Z to restart", 30, 120, 10)
 	else --game is running
 		--court
@@ -709,12 +713,20 @@ function _update60()
 		if ball.x > court.right then
 			com_points += 1
 			scored = "com"
-			newRound() --reset game
+			if com_points < 7 then
+				newRound()
+			else
+				ended = true
+			end
 		end
 		if ball.x < court.left then
 			player_points += 1
 			scored = "player"
-			newRound() --reset game
+			if player_points < 7 then
+				newRound()
+			else
+				ended = true
+			end
 		end
 
 		--ball movement
