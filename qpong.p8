@@ -1,6 +1,9 @@
 pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
+-- QPong
+-- by Qiskiters
+
 -- math.p8
 -- This code is part of Qiskit.
 --
