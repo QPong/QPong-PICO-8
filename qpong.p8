@@ -302,7 +302,7 @@ ended=false
 scored = ""
 blink_timer = 0
 
-function newgame()
+function new_game()
     started = true
     ended = false
     player_points = 0
@@ -399,10 +399,10 @@ function newgame()
         separation=15,
         color=5
     }
-    newRound()
+    new_round()
 end
 
-function newRound()
+function new_round()
 
     if scored == "player" then
         ball={
@@ -612,7 +612,7 @@ function _draw()
 end
 
 
-function simCir()
+function sim_cir()
     qc = QuantumCircuit()
     qc.set_registers(3,3)
     for slots = 1,8 do
@@ -679,7 +679,7 @@ function _update60()
 
     if (not started) or ended then
         if btnp(4) then
-            newgame()
+            new_game()
         end
     else
         if btnp(2)
@@ -705,7 +705,7 @@ function _update60()
           else
             gates[cursor.row+1][cursor.column+1]=2
           end
-          simCir()
+          sim_cir()
         end
         if btnp(4) then
           cur_gate = gates[cursor.row+1][cursor.column+1]
@@ -714,7 +714,7 @@ function _update60()
           else
             gates[cursor.row+1][cursor.column+1]=5
           end
-          simCir()
+          sim_cir()
         end
 
         --computer controls
@@ -743,7 +743,7 @@ function _update60()
             com_points += 1
             scored = "com"
             if com_points < 7 then
-                newRound()
+                new_round()
             else
                 ended = true
             end
@@ -752,7 +752,7 @@ function _update60()
             player_points += 1
             scored = "player"
             if player_points < 7 then
-                newRound()
+                new_round()
             else
                 ended = true
             end
@@ -789,7 +789,7 @@ function _update60()
         elseif ball.x < court.edge and counter > 0 then
           counter-=1
           if counter==0 then
-            simCir()
+            sim_cir()
           end
         end
         ------------------------
