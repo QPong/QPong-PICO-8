@@ -64,10 +64,10 @@ function QuantumCircuit ()
     qc.num_qubits = math.max(qc.num_qubits,qc2.num_qubits)
     qc.num_clbits = math.max(qc.num_clbits,qc2.num_clbits)
     for g, gate in pairs(qc2.data) do
-      qc.data[#qc.data+1] = ( gate )    
+      qc.data[#qc.data+1] = ( gate )
     end
   end
-      
+
   function qc.x (q)
     qc.data[#qc.data+1] = ( {'x',q} )
   end
@@ -300,10 +300,10 @@ scored = ""
 blink_timer = 0
 
 function newgame()
-	started = true
-	ended = false
-	player_points = 0
-	com_points = 0
+    started = true
+    ended = false
+    player_points = 0
+    com_points = 0
 
     --variables
     counter=0
@@ -337,18 +337,18 @@ function newgame()
       H=5
     }
     gates={
-		{1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1},
-		{1,1,1,1,1,1,1,1}
-	}
-	-- Relative frequency of the measurement results
-	-- Obtained from simulator
-	probs = {1, 0, 0, 0, 0, 0, 0, 0}
+        {1,1,1,1,1,1,1,1},
+        {1,1,1,1,1,1,1,1},
+        {1,1,1,1,1,1,1,1}
+    }
+    -- Relative frequency of the measurement results
+    -- Obtained from simulator
+    probs = {1, 0, 0, 0, 0, 0, 0, 0}
   --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
   --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
 
-	-- How many updates left does the paddle stays measured
-	measured_timer = 0
+    -- How many updates left does the paddle stays measured
+    measured_timer = 0
 
     cursor = {
         row=0,
@@ -365,7 +365,7 @@ function newgame()
     else
         sfx(5)
     end
-	--court
+    --court
     court={
         left=0,
         right=127,
@@ -374,7 +374,7 @@ function newgame()
         edge=107, --when ball collide this line, measure the circuit
         color=5
     }
-	--court center line
+    --court center line
     dash_line={
         x=63,
         y=0,
@@ -396,77 +396,77 @@ function newgame()
         separation=15,
         color=5
     }
-	newRound()
+    newRound()
 end
 
 function newRound()
 
-	if scored == "player" then
-		ball={
-			x = 30,
-			y = 30 + rnd(5),
-			color = 7,
-			width = 2,
-			dx = 0.6,
-			dy = rnd() - 0.5,
-			speed = 1,
-			speedup = 0.05
-		}
-	else
-		ball={
-			x = 98,
-			y = 30 + rnd(5),
-			color = 7,
-			width = 2,
-			dx = -0.6,
-			dy = rnd() - 0.5,
-			speed = 1,
-			speedup = 0.05
-		}
-	end
+    if scored == "player" then
+        ball={
+            x = 30,
+            y = 30 + rnd(5),
+            color = 7,
+            width = 2,
+            dx = 0.6,
+            dy = rnd() - 0.5,
+            speed = 1,
+            speedup = 0.05
+        }
+    else
+        ball={
+            x = 98,
+            y = 30 + rnd(5),
+            color = 7,
+            width = 2,
+            dx = -0.6,
+            dy = rnd() - 0.5,
+            speed = 1,
+            speedup = 0.05
+        }
+    end
 end
 
 function _draw()
     cls()
 
-	if not started then
-		if blink_timer < 40 then
-			print("press z", 50, 80, 10)
-		end
+    if not started then
+        if blink_timer < 40 then
+            print("press z", 50, 80, 10)
+        end
 
-		for i = 0, 10 do
-			for j = 0, 3 do
-				spr(64 + i + 16 * j,
-					20 + 8 * i,
-					30 + 8 * j)
-			end
-		end
+        for i = 0, 10 do
+            for j = 0, 3 do
+                spr(64 + i + 16 * j,
+                    20 + 8 * i,
+                    30 + 8 * j)
+            end
+        end
 
-		for i = 0,2 do
-		  --print IBM logo
-		  spr(i+140,i*8+64,104)
-		  spr(i+156,i*8+64,112)
-		  --print NTU logo
-		  spr(i+172,i*8+104,104)
-		  spr(i+188,i*8+104,112)
-		end
-		spr(160,92,112)
+        for i = 0,2 do
+          --print IBM logo
+          spr(i+140,i*8+64,104)
+          spr(i+156,i*8+64,112)
+          --print NTU logo
+          spr(i+172,i*8+104,104)
+          spr(i+188,i*8+104,112)
+        end
+        spr(160,92,112)
 
-	elseif ended then
+    elseif ended then
         if scored == "player" then
         --player win
         --TODO 192 208
             print("you demostrated", 20 , 20 , 8)
             for i = 1,4 do
                 spr(i+200,20+8*i,30)
-    
+
             end
             for i = 1,5 do
                 spr(i+216,63+8*i,30)
             end
             spr(236,95,38)
             spr(237,103,38)
-            --cat    
+            --cat
             sspr(25,97,16,16,0,96,32,32)
 --[[             spr(195,0,112)
             spr(196,8,112)
@@ -478,7 +478,7 @@ function _draw()
             spr(200,108,10)
             spr(215,100,18)
             spr(216,108,18)
-            
+
             print("for the first time ",53,46,8)
             print("in human history!",53,54,8)
         --com win
@@ -501,109 +501,109 @@ function _draw()
 
 
 
-        end 
+        end
 
         --restart
         if blink_timer < 40 then
-			print("press z to restart", 30, 80, 10)
-		end
+            print("press z to restart", 30, 80, 10)
+        end
 
 
 
-	else --game is running
-		--court
-		rect(court.left,court.top,court.right,court.bottom,court.color)
+    else --game is running
+        --court
+        rect(court.left,court.top,court.right,court.bottom,court.color)
 
-		--dashed center line
-		repeat
-			line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
-			dash_line.y += dash_line.length*2
-		until dash_line.y > court.bottom-1
-		dash_line.y = 0 --reset
+        --dashed center line
+        repeat
+            line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
+            dash_line.y += dash_line.length*2
+        until dash_line.y > court.bottom-1
+        dash_line.y = 0 --reset
 
-		--circuit composer
-		rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
-		--qubit lines
-		repeat
-			line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
-			qubit_line.y += qubit_line.separation
-		until qubit_line.y > composer.bottom-1
-		qubit_line.y = 90 --reset
+        --circuit composer
+        rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
+        --qubit lines
+        repeat
+            line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
+            qubit_line.y += qubit_line.separation
+        until qubit_line.y > composer.bottom-1
+        qubit_line.y = 90 --reset
 
-		for slot = 1, 8 do
-			for wire = 1, 3 do
-				gnum = gates[wire][slot] - 2
-				if gnum != -1 then
-					spr(gnum,
-						qubit_line.x + (slot - 1) * qubit_line.separation - 4,
-						qubit_line.y + (wire - 1) * qubit_line.separation - 4)
-				end
-			end
-		end
+        for slot = 1, 8 do
+            for wire = 1, 3 do
+                gnum = gates[wire][slot] - 2
+                if gnum != -1 then
+                    spr(gnum,
+                        qubit_line.x + (slot - 1) * qubit_line.separation - 4,
+                        qubit_line.y + (wire - 1) * qubit_line.separation - 4)
+                end
+            end
+        end
 
-		--cursor
-		cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
-		cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
-		spr(cursor.sprite,cursor.x,cursor.y)
+        --cursor
+        cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
+        cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
+        spr(cursor.sprite,cursor.x,cursor.y)
 
-		for x=0,7 do
-			spr(6, 94, 10 * x + 2)
-			a=x%2
-			b=flr(x/2)%2
-			c=flr(x/4)%2
-			spr(c+4, 97, 10 * x + 2)
-			spr(b+4, 102, 10 * x + 2)
-			spr(a+4, 107, 10 * x + 2)
-			spr(7, 111, 10 * x + 2)
-		end
+        for x=0,7 do
+            spr(6, 94, 10 * x + 2)
+            a=x%2
+            b=flr(x/2)%2
+            c=flr(x/4)%2
+            spr(c+4, 97, 10 * x + 2)
+            spr(b+4, 102, 10 * x + 2)
+            spr(a+4, 107, 10 * x + 2)
+            spr(7, 111, 10 * x + 2)
+        end
 
-		--player
-		for y=0,7 do
-			local color
-			local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
-			if prob > .99 then
-				color = 7
-			elseif prob > .49 then
-				color = 6
-			elseif prob > .24 then
-				color = 13
-			elseif prob > .11 then
-				color = 5
-			else
-				color = 0
-			end
-			
-			rectfill(
-				player.x,
-				10 * y + 1,
-				player.x + player.width,
-				10 * y + player.height,
-				color
-			)
-		end
+        --player
+        for y=0,7 do
+            local color
+            local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
+            if prob > .99 then
+                color = 7
+            elseif prob > .49 then
+                color = 6
+            elseif prob > .24 then
+                color = 13
+            elseif prob > .11 then
+                color = 5
+            else
+                color = 0
+            end
 
-		--ball
-		rectfill(
-			ball.x,
-			ball.y,
-			ball.x + ball.width,
-			ball.y + ball.width,
-			ball.color
-		)
+            rectfill(
+                player.x,
+                10 * y + 1,
+                player.x + player.width,
+                10 * y + player.height,
+                color
+            )
+        end
 
-		--computer
-		rectfill(
-			com.x,
-			com.y,
-			com.x + com.width,
-			com.y + com.height,
-			com.color
-		)
+        --ball
+        rectfill(
+            ball.x,
+            ball.y,
+            ball.x + ball.width,
+            ball.y + ball.width,
+            ball.color
+        )
 
-		--scores
-		print(player_points,66,2,player.color)
-		print(com_points,58,2,com.color)
-	end
+        --computer
+        rectfill(
+            com.x,
+            com.y,
+            com.x + com.width,
+            com.y + com.height,
+            com.color
+        )
+
+        --scores
+        print(player_points,66,2,player.color)
+        print(com_points,58,2,com.color)
+    end
 
 
 end
@@ -614,32 +614,32 @@ function simCir()
     qc.set_registers(3,3)
     for slots = 1,8 do
       for wires = 1,3 do
-       if (gates[wires][slots] == 2) then 
+       if (gates[wires][slots] == 2) then
           qc.x(wires-1)
-        
-        elseif (gates[wires][slots] == 3) then 
+
+        elseif (gates[wires][slots] == 3) then
           qc.y(wires-1)
-        
+
         elseif (gates[wires][slots] == 4) then
           qc.z(wires-1)
-       
-        elseif (gates[wires][slots] == 5) then 
-          qc.h(wires-1)  
-        end 
-      end          
+
+        elseif (gates[wires][slots] == 5) then
+          qc.h(wires-1)
+        end
+      end
     end
 
     qc.measure(0,0)
     qc.measure(1,1)
     qc.measure(2,2)
-    
+
     result = simulate(qc,'expected_counts',1)
 
     for key, value in pairs(result) do
       print(key,value)
       idx = tonum('0b'..key) + 1
       probs[idx]=value
-    end  
+    end
 end
 
 function meas_prob()
@@ -650,12 +650,12 @@ function meas_prob()
     --print(r)
     num =0
     for i = 1,8 do
-        
+
         if (r > probs[i]) then
             num=r-probs[i]
             r=num
-        
-        elseif (r<=probs[i]) then 
+
+        elseif (r<=probs[i]) then
             idx = i
             break
         end
@@ -671,145 +671,145 @@ function meas_prob()
 end
 
 function _update60()
-	blink_timer = (blink_timer + 1) % 60
+    blink_timer = (blink_timer + 1) % 60
     --player controls
-    
-	if (not started) or ended then
-		if btnp(4) then
-			newgame()
-		end
-	else
-		if btnp(2)
-		and cursor.row > 0 then
-			cursor.row -= 1
-		end
-		if btnp(3)
-		and cursor.row < 2 then
-			cursor.row += 1
-		end
-		if btnp(0)
-		and cursor.column > 0 then
-			cursor.column -= 1
-		end
-		if btnp(1)
-		and cursor.column < 7  then
-			cursor.column += 1
-		end
-		if btnp(5) then 
-		  cur_gate = gates[cursor.row+1][cursor.column+1]
-		  if cur_gate==2 then
-			gates[cursor.row+1][cursor.column+1]=1
-		  else
-			gates[cursor.row+1][cursor.column+1]=2
-		  end
-		  simCir()
-		end
-		if btnp(4) then 
-		  cur_gate = gates[cursor.row+1][cursor.column+1]
-		  if cur_gate==5 then
-			gates[cursor.row+1][cursor.column+1]=1
-		  else
-			gates[cursor.row+1][cursor.column+1]=5
-		  end
-		  simCir()
-		end
 
-		--computer controls
-		com.y += com.speed
-		com.y = max(com.y, 1)
-		com.y = min(com.y, 70)
+    if (not started) or ended then
+        if btnp(4) then
+            newgame()
+        end
+    else
+        if btnp(2)
+        and cursor.row > 0 then
+            cursor.row -= 1
+        end
+        if btnp(3)
+        and cursor.row < 2 then
+            cursor.row += 1
+        end
+        if btnp(0)
+        and cursor.column > 0 then
+            cursor.column -= 1
+        end
+        if btnp(1)
+        and cursor.column < 7  then
+            cursor.column += 1
+        end
+        if btnp(5) then
+          cur_gate = gates[cursor.row+1][cursor.column+1]
+          if cur_gate==2 then
+            gates[cursor.row+1][cursor.column+1]=1
+          else
+            gates[cursor.row+1][cursor.column+1]=2
+          end
+          simCir()
+        end
+        if btnp(4) then
+          cur_gate = gates[cursor.row+1][cursor.column+1]
+          if cur_gate==5 then
+            gates[cursor.row+1][cursor.column+1]=1
+          else
+            gates[cursor.row+1][cursor.column+1]=5
+          end
+          simCir()
+        end
 
-		local mid_com = com.y + (com.height/2)
-		local r = rnd()
-		if ball.y - mid_com > 0 then
-			if r < .5 then
-				com.speed = min(com.speed + .05, .6)
-			elseif r > .75 then
-				com.speed = max(com.speed - .05, -.6)
-			end
-		else
-			if r < .5 then
-				com.speed = max(com.speed - .05, -.6)
-			elseif r > .75 then
-				com.speed = min(com.speed + .05, .6)
-			end
-		end
+        --computer controls
+        com.y += com.speed
+        com.y = max(com.y, 1)
+        com.y = min(com.y, 70)
 
-  	--score
-		if ball.x > court.right then
-			com_points += 1
-			scored = "com"
-			if com_points < 7 then
-				newRound()
-			else
-				ended = true
-			end
-		end
-		if ball.x < court.left then
-			player_points += 1
-			scored = "player"
-			if player_points < 7 then
-				newRound()
-			else
-				ended = true
-			end
-		end
+        local mid_com = com.y + (com.height/2)
+        local r = rnd()
+        if ball.y - mid_com > 0 then
+            if r < .5 then
+                com.speed = min(com.speed + .05, .6)
+            elseif r > .75 then
+                com.speed = max(com.speed - .05, -.6)
+            end
+        else
+            if r < .5 then
+                com.speed = max(com.speed - .05, -.6)
+            elseif r > .75 then
+                com.speed = min(com.speed + .05, .6)
+            end
+        end
+
+      --score
+        if ball.x > court.right then
+            com_points += 1
+            scored = "com"
+            if com_points < 7 then
+                newRound()
+            else
+                ended = true
+            end
+        end
+        if ball.x < court.left then
+            player_points += 1
+            scored = "player"
+            if player_points < 7 then
+                newRound()
+            else
+                ended = true
+            end
+        end
     --collide with court
-		if ball.y + ball.width >= court.bottom - 1
-		or ball.y <= court.top+1 then
-			ball.dy = -ball.dy
-			sfx(2)
-		end
+        if ball.y + ball.width >= court.bottom - 1
+        or ball.y <= court.top+1 then
+            ball.dy = -ball.dy
+            sfx(2)
+        end
 
-		--collide with com
-		if ball.dx < 0
+        --collide with com
+        if ball.dx < 0
     and ball.x <= com.x+com.width
-    and ball.x >com.x 
-		and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
-		then
-			ball.dy -= ball.speedup*2
-			--flip ball DX and add speed
-			ball.dx = -(ball.dx - ball.speedup)
-			sfx(1)
-		end
-		--TODO: when ball collide on edge--> measure
-		--UNTEST
-		if ball.x > court.edge and counter==0 then
-			counter=30
-			meas_prob()
-			for i=1,8 do
-				if probs[i] == 1 then
-					beg = 10 * (i - 1)
-					player.y = beg
-				end
-			end
-		elseif ball.x < court.edge and counter > 0 then
-		  counter-=1
-		  if counter==0 then
-			simCir()
-		  end
-		end
-		------------------------
+    and ball.x >com.x
+        and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
+        then
+            ball.dy -= ball.speedup*2
+            --flip ball DX and add speed
+            ball.dx = -(ball.dx - ball.speedup)
+            sfx(1)
+        end
+        --TODO: when ball collide on edge--> measure
+        --UNTEST
+        if ball.x > court.edge and counter==0 then
+            counter=30
+            meas_prob()
+            for i=1,8 do
+                if probs[i] == 1 then
+                    beg = 10 * (i - 1)
+                    player.y = beg
+                end
+            end
+        elseif ball.x < court.edge and counter > 0 then
+          counter-=1
+          if counter==0 then
+            simCir()
+          end
+        end
+        ------------------------
 
-		--collide with player
-		if ball.dx > 0
+        --collide with player
+        if ball.dx > 0
     and ball.x <= player.x+player.width
-		and ball.x> player.x
-		and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
-		then
-			ball.dy -= ball.speedup*2
-			--flip ball DX and add speed
-			ball.dx = -(ball.dx - ball.speedup)
-			sfx(1)
-		end
+        and ball.x> player.x
+        and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
+        then
+            ball.dy -= ball.speedup*2
+            --flip ball DX and add speed
+            ball.dx = -(ball.dx - ball.speedup)
+            sfx(1)
+        end
 
 
 
 
-		--ball movement
-		ball.x += ball.dx
-		ball.y += ball.dy
-	end
+        --ball movement
+        ball.x += ball.dx
+        ball.y += ball.dy
+    end
 end
 
 __gfx__
