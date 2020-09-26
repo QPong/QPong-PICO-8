@@ -302,6 +302,17 @@ ended=false
 scored = ""
 blink_timer = 0
 
+function gbvram()
+  -- remap gameboy color pallette
+
+  for i=0,15,4 do
+    poke(0x5f10+i, 0xf1)
+    poke(0x5f11+i, 0x23)
+    poke(0x5f12+i, 0x93)
+    poke(0x5f13+i, 0xfb)
+  end
+end
+
 function new_game()
     started = true
     ended = false
@@ -431,7 +442,7 @@ end
 
 function _draw()
     cls()
-
+    gbvram() -- gameboy color pallette
     if not started then
         if blink_timer < 40 then
             print("press z", 50, 80, 10)
