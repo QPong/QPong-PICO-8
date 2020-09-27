@@ -329,6 +329,130 @@ function gbvram()
 
 end
 
+--menu system
+--by pixelcod
+
+function lerp(startv,endv,per)
+ return(startv+per*(endv-startv))
+end
+
+function change_palette()
+ palnum+=1
+ if (palnum>6)palnum=1
+end
+
+function update_cursor()
+ if (btnp(2)) m.sel-=1 cx=m.x sfx(0)
+ if (btnp(3)) m.sel+=1 cx=m.x sfx(0)
+ if (btnp(4)) cx=m.x sfx(1)
+ if (btnp(5)) sfx(2)
+ if (m.sel>m.amt) m.sel=1
+ if (m.sel<=0) m.sel=m.amt
+
+ cx=lerp(cx,m.x+5,0.5)
+end
+
+function draw_options()
+ for i=1, m.amt do
+  oset=i*8
+  if i==m.sel then
+   rectfill(cx,m.y+oset-1,cx+36,m.y+oset+5,col1)
+   print(m.options[i],cx+1,m.y+oset,col2)
+  else
+   print(m.options[i],m.x,m.y+oset,col1)
+  end
+ end
+end
+
+function draw_octopus()
+ if ox>m.x and ox<m.x+40 and
+    oy>m.y and oy<m.y+32 then
+   ox=rnd(112)+8
+   oy=rnd(112)+8
+ end
+ pal(7,col1)
+ spr(1,ox,oy) spr(2,ox+8,oy)
+ spr(17,ox,oy+8) spr(18,ox+8,oy+8)
+ pal()
+end
+
+function init_menu()
+ m={}
+ m.x=8
+ cx=m.x
+ m.y=40
+ m.options={"start","settings",
+            "exit"}
+ m.amt=0
+ for i in all(m.options) do
+  m.amt+=1
+ end
+ m.sel=1
+ sub_mode=0
+ menu_timer=0
+end
+
+function update_menu()
+ update_cursor()
+ if sub_mode==0 then
+  if btnp(4) and
+  menu_timer>1 then
+   if m.options[m.sel]=="start" then
+    new_game()
+   elseif m.options[m.sel]=="settings" then
+    init_settings()
+   end
+  end
+ end
+
+ if (sub_mode==1) update_settings()
+
+ col1=pals[palnum][1]
+ col2=pals[palnum][2]
+ menu_timer+=1
+end
+
+function draw_menu()
+ cls(col2)
+ draw_options()
+ if (octopus==true) draw_octopus()
+end
+
+function init_settings()
+ m.sel=1
+ m.options={"palette","controls","octopus"}
+ m.amt=0
+ for i in all(m.options) do
+  m.amt+=1
+ end
+ sub_mode=1
+ menu_timer=0
+end
+
+function update_settings()
+ if (btnp(5))init_menu()
+ if btnp(4) and
+ menu_timer>1 then
+  if m.options[m.sel]=="palette" then
+   gbvram()
+  elseif m.options[m.sel]=="octopus" then
+   octopus=not octopus
+   ox=rnd(112)+8
+   oy=rnd(112)+8
+  end
+ end
+end
+
+----------------------
+
+function _init()
+ octopus=false
+ pals={{7,0},{15,1},{6,5},
+               {10,8},{7,3},{7,2}}
+ palnum=5
+ init_menu()
+end
+
 function new_game()
     started = true
     ended = false
@@ -458,7 +582,7 @@ end
 
 function _draw()
     cls()
-    gbvram() -- gameboy color pallette
+    --gbvram() -- gameboy color pallette
 
     -- test color pallette swapping
     --[[
@@ -466,6 +590,8 @@ function _draw()
       print(i, 0, 5*i, i)
     end
     ]]
+    draw_menu()
+    --[[
     if not started then
         if blink_timer < 40 then
             print("press z", 50, 80, 10)
@@ -496,10 +622,6 @@ function _draw()
             spr(237,103,38)
             --cat
             sspr(25,97,16,16,0,96,32,32)
---[[             spr(195,0,112)
-            spr(196,8,112)
-            spr(211,0,120)
-            spr(212,8,120) ]]
 
             --qiskit
             spr(199,100,10)
@@ -517,17 +639,11 @@ function _draw()
             --cat
             sspr(1,97,16,16,0,96,32,32)
 
---[[             spr(192,0,112)
-            spr(193,8,112)
-            spr(208,0,120)
-            spr(209,8,120) ]]
             --computer
             spr(197,100,10)
             spr(198,108,10)
             spr(213,100,18)
             spr(214,108,18)
-
-
 
         end
 
@@ -632,7 +748,7 @@ function _draw()
         print(player_points,66,2,player.color)
         print(com_points,58,2,com.color)
     end
-
+    ]]
 
 end
 
@@ -699,6 +815,8 @@ function meas_prob()
 end
 
 function _update60()
+    update_menu()
+
     blink_timer = (blink_timer + 1) % 60
     --player controls
 
