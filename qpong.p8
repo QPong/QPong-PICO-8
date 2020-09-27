@@ -43,9 +43,9 @@ function QuantumCircuit ()
 
   local qc = {}
 
-  local function set_registers (n,m)
+  local function set_registers (n,menu)
     qc.num_qubits = n
-    qc.num_clbits = m or 0
+    qc.num_clbits = menu or 0
   end
   qc.set_registers = set_registers
 
@@ -88,7 +88,7 @@ function QuantumCircuit ()
   end
 
   function qc.measure (q,b)
-    qc.data[#qc.data+1] = ( {'m',q,b} )
+    qc.data[#qc.data+1] = ( {'menu',q,b} )
   end
 
   function qc.rz (theta,q)
@@ -162,7 +162,7 @@ function simulate (qc, get, shots)
           ket[j] = {amp[1], amp[2]}
       end
 
-    elseif gate[1]=='m' then
+    elseif gate[1]=='menu' then
 
       outputnum_clbitsap[gate[3]] = gate[2]
 
@@ -251,7 +251,7 @@ function simulate (qc, get, shots)
 
     else
 
-      m = {}
+      menu = {}
       for s=1,shots do
         cumu = 0
         un = true
@@ -259,23 +259,23 @@ function simulate (qc, get, shots)
         for j,p in pairs(probs) do
           cumu = cumu + p
           if r<cumu and un then
-            m[s] = get_out(j)
+            menu[s] = get_out(j)
             un = false
           end
         end
       end
 
       if get=="memory" then
-        return m
+        return menu
 
       elseif get=="counts" then
         c = {}
         for s=1,shots do
-          if c[m[s]] then
-            c[m[s]] = c[m[s]] + 1
+          if c[menu[s]] then
+            c[menu[s]] = c[menu[s]] + 1
           else
-            if m[s] then -- in case of pico8 weirdness
-              c[m[s]] = 1
+            if menu[s] then -- in case of pico8 weirdness
+              c[menu[s]] = 1
             else
               if c["error"] then
                 c["error"] = c["error"]+1
@@ -340,52 +340,40 @@ function change_palette()
 end
 
 function update_cursor()
- if (btnp(2)) m.sel-=1 cx=m.x sfx(0)
- if (btnp(3)) m.sel+=1 cx=m.x sfx(0)
- if (btnp(4)) cx=m.x sfx(1)
+ if (btnp(2)) menu.sel-=1 cx=menu.x sfx(0)
+ if (btnp(3)) menu.sel+=1 cx=menu.x sfx(0)
+ if (btnp(4)) cx=menu.x sfx(1)
  if (btnp(5)) sfx(2)
- if (m.sel>m.amt) m.sel=1
- if (m.sel<=0) m.sel=m.amt
+ if (menu.sel>menu.amt) menu.sel=1
+ if (menu.sel<=0) menu.sel=menu.amt
 
- cx=lerp(cx,m.x+5,0.5)
+ cx=lerp(cx,menu.x+5,0.5)
 end
 
 function draw_options()
- for i=1, m.amt do
+ for i=1, menu.amt do
   oset=i*8
-  if i==m.sel then
-   rectfill(cx,m.y+oset-1,cx+36,m.y+oset+5,col1)
-   print(m.options[i],cx+1,m.y+oset,col2)
+  if i==menu.sel then
+   rectfill(cx,menu.y+oset-1,cx+32,menu.y+oset+5,col1)
+   print(menu.options[i],cx+1,menu.y+oset,col2)
   else
-   print(m.options[i],m.x,m.y+oset,col1)
+   print(menu.options[i],menu.x,menu.y+oset,col1)
   end
  end
 end
 
-function draw_octopus()
- if ox>m.x and ox<m.x+40 and
-    oy>m.y and oy<m.y+32 then
-   ox=rnd(112)+8
-   oy=rnd(112)+8
- end
- pal(7,col1)
- spr(1,ox,oy) spr(2,ox+8,oy)
- spr(17,ox,oy+8) spr(18,ox+8,oy+8)
- pal()
-end
-
 function init_menu()
- m={}
- m.x=8
- cx=m.x
- m.y=40
- m.options={"start","settings",
-            "exit"}
- m.amt=0
- for i in all(m.options) do
-  m.amt+=1
+ menu={}
+ menu.x=50
+ cx=menu.x
+ menu.y=70
+ menu.options={"start","settings",
+            "credits"}
+ menu.amt=0
+ for i in all(menu.options) do
+  menu.amt+=1
  end
- m.sel=1
+ menu.sel=1
  sub_mode=0
  menu_timer=0
 end
@@ -395,60 +383,53 @@ function update_menu()
  if sub_mode==0 then
   if btnp(4) and
   menu_timer>1 then
-   if m.options[m.sel]=="start" then
+   if menu.options[menu.sel]=="start" then
     new_game()
-   elseif m.options[m.sel]=="settings" then
+   elseif menu.options[menu.sel]=="settings" then
     init_settings()
    end
   end
  end
 
  if (sub_mode==1) update_settings()
-
- col1=pals[palnum][1]
- col2=pals[palnum][2]
+ col1=7
+ col2=0
  menu_timer+=1
 end
 
-function draw_menu()
- cls(col2)
- if blink_timer < 40 then
-            print("press z", 50, 80, 10)
-        end
+function draw_logo()
+  for i = 0, 10 do
+    for j = 0, 1 do
+        spr(64 + i + 16 * j,
+            32 + 8 * i,
+            30 + 8 * j)
+    end
+  end
+end
 
-        -- draw logo
-        for i = 0, 10 do
-            for j = 0, 1 do
-                spr(64 + i + 16 * j,
-                    32 + 8 * i,
-                    30 + 8 * j)
-            end
-        end
- draw_options()
- if (octopus==true) draw_octopus()
+function draw_menu()
+  cls()
+  draw_logo()
+  draw_options()
 end
 
 function init_settings()
- m.sel=1
- m.options={"palette","controls","octopus"}
- m.amt=0
- for i in all(m.options) do
-  m.amt+=1
+ menu.sel=1
+ menu.options={"palette","controls"}
+ menu.amt=0
+ for i in all(menu.options) do
+  menu.amt+=1
  end
  sub_mode=1
  menu_timer=0
 end
 
 function update_settings()
- if (btnp(5))init_menu()
+ if (btnp(5)) init_menu()
  if btnp(4) and
  menu_timer>1 then
-  if m.options[m.sel]=="palette" then
+  if menu.options[menu.sel]=="palette" then
    gbvram()
-  elseif m.options[m.sel]=="octopus" then
-   octopus=not octopus
-   ox=rnd(112)+8
-   oy=rnd(112)+8
   end
  end
 end
@@ -456,7 +437,6 @@ end
 ----------------------
 
 function _init()
- octopus=false
  pals={{7,0},{15,1},{6,5},
                {10,8},{7,3},{7,2}}
  palnum=5
@@ -658,7 +638,7 @@ function draw_game()
   --player
   for y=0,7 do
       local color
-      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
+      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'menu allowing .01 error
       if prob > .99 then
           color = 7
       elseif prob > .49 then
@@ -727,26 +707,6 @@ function new_round()
           speedup = 0.05
       }
   end
-end
-
-function _draw()
-    cls()
-    --gbvram() -- gameboy color pallette
-
-    -- test color pallette swapping
-    --[[
-    for i=0,15 do
-      print(i, 0, 5*i, i)
-    end
-    ]]
-
-    if scene == "title" then
-      draw_menu()
-    elseif scene == "game" then
-      draw_game()
-    elseif scene == "game_over"  then
-      draw_game_over()
-    end
 end
 
 function sim_cir()
@@ -949,6 +909,26 @@ function _update60()
     update_game_over()
   end
   blink_timer = (blink_timer + 1) % 60
+end
+
+function _draw()
+    cls()
+    --gbvram() -- gameboy color pallette
+
+    -- test color pallette swapping
+    --[[
+    for i=0,15 do
+      print(i, 0, 5*i, i)
+    end
+    ]]
+
+    if scene == "title" then
+      draw_menu()
+    elseif scene == "game" then
+      draw_game()
+    elseif scene == "game_over"  then
+      draw_game_over()
+    end
 end
 
 __gfx__
