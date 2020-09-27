@@ -334,11 +334,6 @@ function lerp(startv,endv,per)
  return(startv+per*(endv-startv))
 end
 
-function change_palette()
- palnum+=1
- if (palnum>6)palnum=1
-end
-
 function update_cursor()
  if (btnp(2)) menu.sel-=1 cx=menu.x sfx(0)
  if (btnp(3)) menu.sel+=1 cx=menu.x sfx(0)
@@ -407,6 +402,9 @@ function draw_logo()
             30 + 8 * j)
     end
   end
+  print("made by qiskitters with", 4*3, 120, 6)
+  print("qiskitters", 4*11, 120, 12)
+  print("\135", 4*27, 120, 8)
 end
 
 function draw_menu()
