@@ -907,9 +907,18 @@ function update_credits()
 end
 
 function draw_credits()
-  print("made by qiskitters with love", 0, 0, 8)
-  authors
-  print("Lee Yi, Lee Yu-Chieh, Zuo Tso-Yen, Jian J-Lee, Leung Shek_Lun, Huang Junye", 0, 0, 10)
+  print("made during", 4, 8, 9)
+  print("qiskit hackathon taiwan 2020", 4*2, 8*2, 7)
+  print("by", 4, 8*4, 9)
+  authors = {"jian j-lee", "lee yi", "lee yu-chieh", "zuo tso-yen"}
+  coaches = {"huang junye", "leung shek lun"}
+  xoffset = 4*2
+  yoffset = 8*5
+  print("team members", xoffset, yoffset, 12)
+  for i, name in ipairs(authors) do print(name, xoffset+4, yoffset+i*8, 7) end
+
+  print("coaches", xoffset, yoffset+44, 12)
+  for i, name in ipairs(coaches) do print(name, xoffset+4, yoffset+44+i*8, 7) end
 end
 
 function _update60()
