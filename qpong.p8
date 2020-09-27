@@ -297,8 +297,6 @@ end
 
 -- QPong
 
-started=false
-ended=false
 scored = ""
 blink_timer = 0
 
@@ -414,6 +412,18 @@ end
 
 function draw_menu()
  cls(col2)
+ if blink_timer < 40 then
+            print("press z", 50, 80, 10)
+        end
+
+        -- draw logo
+        for i = 0, 10 do
+            for j = 0, 1 do
+                spr(64 + i + 16 * j,
+                    32 + 8 * i,
+                    30 + 8 * j)
+            end
+        end
  draw_options()
  if (octopus==true) draw_octopus()
 end
@@ -450,12 +460,12 @@ function _init()
  pals={{7,0},{15,1},{6,5},
                {10,8},{7,3},{7,2}}
  palnum=5
+ scene = "title"
  init_menu()
 end
 
 function new_game()
-    started = true
-    ended = false
+    scene = "game"
     player_points = 0
     com_points = 0
 
@@ -553,31 +563,170 @@ function new_game()
     new_round()
 end
 
-function new_round()
-
-    if scored == "player" then
-        ball={
-            x = 30,
-            y = 30 + rnd(5),
-            color = 7,
-            width = 2,
-            dx = 0.6,
-            dy = rnd() - 0.5,
-            speed = 1,
-            speedup = 0.05
-        }
-    else
-        ball={
-            x = 98,
-            y = 30 + rnd(5),
-            color = 7,
-            width = 2,
-            dx = -0.6,
-            dy = rnd() - 0.5,
-            speed = 1,
-            speedup = 0.05
-        }
+function draw_game_over()
+  if scored == "player" then
+    --player win
+    --TODO 192 208
+    print("you demostrated", 20 , 20 , 8)
+    for i = 1,4 do
+        spr(i+200,20+8*i,30)
     end
+    for i = 1,5 do
+        spr(i+216,63+8*i,30)
+    end
+    spr(236,95,38)
+    spr(237,103,38)
+    --cat
+    sspr(25,97,16,16,0,96,32,32)
+
+    --qiskit
+    spr(199,100,10)
+    spr(200,108,10)
+    spr(215,100,18)
+    spr(216,108,18)
+
+    print("for the first time ",53,46,8)
+    print("in human history!",53,54,8)
+  --com win
+  --TODO
+  else
+    print("classical computers",20,30,8)
+    print("still rule the world!",40,50,8)
+    --cat
+    sspr(1,97,16,16,0,96,32,32)
+
+    --computer
+    spr(197,100,10)
+    spr(198,108,10)
+    spr(213,100,18)
+    spr(214,108,18)
+  end
+
+  --restart
+  if blink_timer < 40 then
+      print("press z to restart", 30, 80, 10)
+  end
+end
+
+function draw_game()
+  --court
+  rect(court.left,court.top,court.right,court.bottom,court.color)
+
+  --dashed center line
+  repeat
+      line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
+      dash_line.y += dash_line.length*2
+  until dash_line.y > court.bottom-1
+  dash_line.y = 0 --reset
+
+  --circuit composer
+  rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
+  --qubit lines
+  repeat
+      line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
+      qubit_line.y += qubit_line.separation
+  until qubit_line.y > composer.bottom-1
+  qubit_line.y = 90 --reset
+
+  for slot = 1, 8 do
+      for wire = 1, 3 do
+          gnum = gates[wire][slot] - 2
+          if gnum != -1 then
+              spr(gnum,
+                  qubit_line.x + (slot - 1) * qubit_line.separation - 4,
+                  qubit_line.y + (wire - 1) * qubit_line.separation - 4)
+          end
+      end
+  end
+
+  --cursor
+  cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
+  cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
+  spr(cursor.sprite,cursor.x,cursor.y)
+
+  for x=0,7 do
+      spr(6, 94, 10 * x + 2)
+      a=x%2
+      b=flr(x/2)%2
+      c=flr(x/4)%2
+      spr(c+4, 97, 10 * x + 2)
+      spr(b+4, 102, 10 * x + 2)
+      spr(a+4, 107, 10 * x + 2)
+      spr(7, 111, 10 * x + 2)
+  end
+
+  --player
+  for y=0,7 do
+      local color
+      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
+      if prob > .99 then
+          color = 7
+      elseif prob > .49 then
+          color = 6
+      elseif prob > .24 then
+          color = 13
+      elseif prob > .11 then
+          color = 5
+      else
+          color = 0
+      end
+
+      rectfill(
+          player.x,
+          10 * y + 1,
+          player.x + player.width,
+          10 * y + player.height,
+          color
+      )
+  end
+
+  --ball
+  rectfill(
+      ball.x,
+      ball.y,
+      ball.x + ball.width,
+      ball.y + ball.width,
+      ball.color
+  )
+
+  --computer
+  rectfill(
+      com.x,
+      com.y,
+      com.x + com.width,
+      com.y + com.height,
+      com.color
+  )
+
+  --scores
+  print(player_points,66,2,player.color)
+  print(com_points,58,2,com.color)
+end
+
+function new_round()
+  if scored == "player" then
+      ball={
+          x = 30,
+          y = 30 + rnd(5),
+          color = 7,
+          width = 2,
+          dx = 0.6,
+          dy = rnd() - 0.5,
+          speed = 1,
+          speedup = 0.05
+      }
+  else
+      ball={
+          x = 98,
+          y = 30 + rnd(5),
+          color = 7,
+          width = 2,
+          dx = -0.6,
+          dy = rnd() - 0.5,
+          speed = 1,
+          speedup = 0.05
+      }
+  end
 end
 
 function _draw()
@@ -590,168 +739,15 @@ function _draw()
       print(i, 0, 5*i, i)
     end
     ]]
-    draw_menu()
-    --[[
-    if not started then
-        if blink_timer < 40 then
-            print("press z", 50, 80, 10)
-        end
 
-        -- draw logo
-        for i = 0, 10 do
-            for j = 0, 1 do
-                spr(64 + i + 16 * j,
-                    32 + 8 * i,
-                    30 + 8 * j)
-            end
-        end
-
-    elseif ended then
-        if scored == "player" then
-        --player win
-        --TODO 192 208
-            print("you demostrated", 20 , 20 , 8)
-            for i = 1,4 do
-                spr(i+200,20+8*i,30)
-
-            end
-            for i = 1,5 do
-                spr(i+216,63+8*i,30)
-            end
-            spr(236,95,38)
-            spr(237,103,38)
-            --cat
-            sspr(25,97,16,16,0,96,32,32)
-
-            --qiskit
-            spr(199,100,10)
-            spr(200,108,10)
-            spr(215,100,18)
-            spr(216,108,18)
-
-            print("for the first time ",53,46,8)
-            print("in human history!",53,54,8)
-        --com win
-        --TODO
-        else
-            print("classical computers",20,30,8)
-            print("still rule the world!",40,50,8)
-            --cat
-            sspr(1,97,16,16,0,96,32,32)
-
-            --computer
-            spr(197,100,10)
-            spr(198,108,10)
-            spr(213,100,18)
-            spr(214,108,18)
-
-        end
-
-        --restart
-        if blink_timer < 40 then
-            print("press z to restart", 30, 80, 10)
-        end
-
-
-
-    else --game is running
-        --court
-        rect(court.left,court.top,court.right,court.bottom,court.color)
-
-        --dashed center line
-        repeat
-            line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
-            dash_line.y += dash_line.length*2
-        until dash_line.y > court.bottom-1
-        dash_line.y = 0 --reset
-
-        --circuit composer
-        rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
-        --qubit lines
-        repeat
-            line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
-            qubit_line.y += qubit_line.separation
-        until qubit_line.y > composer.bottom-1
-        qubit_line.y = 90 --reset
-
-        for slot = 1, 8 do
-            for wire = 1, 3 do
-                gnum = gates[wire][slot] - 2
-                if gnum != -1 then
-                    spr(gnum,
-                        qubit_line.x + (slot - 1) * qubit_line.separation - 4,
-                        qubit_line.y + (wire - 1) * qubit_line.separation - 4)
-                end
-            end
-        end
-
-        --cursor
-        cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
-        cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
-        spr(cursor.sprite,cursor.x,cursor.y)
-
-        for x=0,7 do
-            spr(6, 94, 10 * x + 2)
-            a=x%2
-            b=flr(x/2)%2
-            c=flr(x/4)%2
-            spr(c+4, 97, 10 * x + 2)
-            spr(b+4, 102, 10 * x + 2)
-            spr(a+4, 107, 10 * x + 2)
-            spr(7, 111, 10 * x + 2)
-        end
-
-        --player
-        for y=0,7 do
-            local color
-            local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
-            if prob > .99 then
-                color = 7
-            elseif prob > .49 then
-                color = 6
-            elseif prob > .24 then
-                color = 13
-            elseif prob > .11 then
-                color = 5
-            else
-                color = 0
-            end
-
-            rectfill(
-                player.x,
-                10 * y + 1,
-                player.x + player.width,
-                10 * y + player.height,
-                color
-            )
-        end
-
-        --ball
-        rectfill(
-            ball.x,
-            ball.y,
-            ball.x + ball.width,
-            ball.y + ball.width,
-            ball.color
-        )
-
-        --computer
-        rectfill(
-            com.x,
-            com.y,
-            com.x + com.width,
-            com.y + com.height,
-            com.color
-        )
-
-        --scores
-        print(player_points,66,2,player.color)
-        print(com_points,58,2,com.color)
+    if scene == "title" then
+      draw_menu()
+    elseif scene == "game" then
+      draw_game()
+    elseif scene == "game_over"  then
+      draw_game_over()
     end
-    ]]
-
 end
-
 
 function sim_cir()
     qc = QuantumCircuit()
@@ -814,149 +810,145 @@ function meas_prob()
     return idx
 end
 
-function _update60()
-    update_menu()
-
-    blink_timer = (blink_timer + 1) % 60
-    --player controls
-
-    if (not started) or ended then
-        if btnp(4) then
-            new_game()
-        end
+function update_game()
+  if btnp(2) and cursor.row > 0 then
+      cursor.row -= 1
+  end
+  if btnp(3) and cursor.row < 2 then
+      cursor.row += 1
+  end
+  if btnp(0) and cursor.column > 0 then
+      cursor.column -= 1
+  end
+  if btnp(1) and cursor.column < 7  then
+      cursor.column += 1
+  end
+  if btnp(5) then
+    cur_gate = gates[cursor.row+1][cursor.column+1]
+    if cur_gate==2 then
+      gates[cursor.row+1][cursor.column+1]=1
     else
-        if btnp(2)
-        and cursor.row > 0 then
-            cursor.row -= 1
-        end
-        if btnp(3)
-        and cursor.row < 2 then
-            cursor.row += 1
-        end
-        if btnp(0)
-        and cursor.column > 0 then
-            cursor.column -= 1
-        end
-        if btnp(1)
-        and cursor.column < 7  then
-            cursor.column += 1
-        end
-        if btnp(5) then
-          cur_gate = gates[cursor.row+1][cursor.column+1]
-          if cur_gate==2 then
-            gates[cursor.row+1][cursor.column+1]=1
-          else
-            gates[cursor.row+1][cursor.column+1]=2
-          end
-          sim_cir()
-        end
-        if btnp(4) then
-          cur_gate = gates[cursor.row+1][cursor.column+1]
-          if cur_gate==5 then
-            gates[cursor.row+1][cursor.column+1]=1
-          else
-            gates[cursor.row+1][cursor.column+1]=5
-          end
-          sim_cir()
-        end
-
-        --computer controls
-        com.y += com.speed
-        com.y = max(com.y, 1)
-        com.y = min(com.y, 70)
-
-        local mid_com = com.y + (com.height/2)
-        local r = rnd()
-        if ball.y - mid_com > 0 then
-            if r < .5 then
-                com.speed = min(com.speed + .05, .6)
-            elseif r > .75 then
-                com.speed = max(com.speed - .05, -.6)
-            end
-        else
-            if r < .5 then
-                com.speed = max(com.speed - .05, -.6)
-            elseif r > .75 then
-                com.speed = min(com.speed + .05, .6)
-            end
-        end
-
-      --score
-      win_score = 7
-        if ball.x > court.right then
-            com_points += 1
-            scored = "com"
-            if com_points < win_score then
-                new_round()
-            else
-                ended = true
-            end
-        end
-        if ball.x < court.left then
-            player_points += 1
-            scored = "player"
-            if player_points < win_score then
-                new_round()
-            else
-                ended = true
-            end
-        end
-    --collide with court
-        if ball.y + ball.width >= court.bottom - 1
-        or ball.y <= court.top+1 then
-            ball.dy = -ball.dy
-            sfx(2)
-        end
-
-        --collide with com
-        if ball.dx < 0
-    and ball.x <= com.x+com.width
-    and ball.x >com.x
-        and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
-        then
-            ball.dy -= ball.speedup*2
-            --flip ball DX and add speed
-            ball.dx = -(ball.dx - ball.speedup)
-            sfx(1)
-        end
-        --TODO: when ball collide on edge--> measure
-        --UNTEST
-        if ball.x > court.edge and counter==0 then
-            counter=30
-            meas_prob()
-            for i=1,8 do
-                if probs[i] == 1 then
-                    beg = 10 * (i - 1)
-                    player.y = beg
-                end
-            end
-        elseif ball.x < court.edge and counter > 0 then
-          counter-=1
-          if counter==0 then
-            sim_cir()
-          end
-        end
-        ------------------------
-
-        --collide with player
-        if ball.dx > 0
-    and ball.x <= player.x+player.width
-        and ball.x> player.x
-        and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
-        then
-            ball.dy -= ball.speedup*2
-            --flip ball DX and add speed
-            ball.dx = -(ball.dx - ball.speedup)
-            sfx(1)
-        end
-
-
-
-
-        --ball movement
-        ball.x += ball.dx
-        ball.y += ball.dy
+      gates[cursor.row+1][cursor.column+1]=2
     end
+    sim_cir()
+  end
+  if btnp(4) then
+    cur_gate = gates[cursor.row+1][cursor.column+1]
+    if cur_gate==5 then
+      gates[cursor.row+1][cursor.column+1]=1
+    else
+      gates[cursor.row+1][cursor.column+1]=5
+    end
+    sim_cir()
+  end
+
+  --computer controls
+  com.y += com.speed
+  com.y = max(com.y, 1)
+  com.y = min(com.y, 70)
+
+  local mid_com = com.y + (com.height/2)
+  local r = rnd()
+  if ball.y - mid_com > 0 then
+      if r < .5 then
+          com.speed = min(com.speed + .05, .6)
+      elseif r > .75 then
+          com.speed = max(com.speed - .05, -.6)
+      end
+  else
+      if r < .5 then
+          com.speed = max(com.speed - .05, -.6)
+      elseif r > .75 then
+          com.speed = min(com.speed + .05, .6)
+      end
+  end
+
+  --score
+  win_score = 1
+  if ball.x > court.right then
+      com_points += 1
+      scored = "com"
+      if com_points < win_score then
+          new_round()
+      else
+          scene = "game_over"
+      end
+  end
+  if ball.x < court.left then
+      player_points += 1
+      scored = "player"
+      if player_points < win_score then
+          new_round()
+      else
+          scene = "game_over"
+      end
+  end
+  --collide with court
+  if ball.y + ball.width >= court.bottom - 1
+  or ball.y <= court.top+1 then
+      ball.dy = -ball.dy
+      sfx(2)
+  end
+
+  --collide with com
+  if ball.dx < 0
+      and ball.x <= com.x+com.width
+      and ball.x >com.x
+      and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
+  then
+      ball.dy -= ball.speedup*2
+      --flip ball DX and add speed
+      ball.dx = -(ball.dx - ball.speedup)
+      sfx(1)
+  end
+  --TODO: when ball collide on edge--> measure
+  --UNTEST
+  if ball.x > court.edge and counter==0 then
+      counter=30
+      meas_prob()
+      for i=1,8 do
+          if probs[i] == 1 then
+              beg = 10 * (i - 1)
+              player.y = beg
+          end
+      end
+  elseif ball.x < court.edge and counter > 0 then
+    counter-=1
+    if counter==0 then
+      sim_cir()
+    end
+  end
+  ------------------------
+
+  --collide with player
+  if ball.dx > 0
+      and ball.x <= player.x+player.width
+      and ball.x> player.x
+      and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
+  then
+      ball.dy -= ball.speedup*2
+      --flip ball DX and add speed
+      ball.dx = -(ball.dx - ball.speedup)
+      sfx(1)
+  end
+  --ball movement
+  ball.x += ball.dx
+  ball.y += ball.dy
+end
+
+function update_game_over()
+  if btnp(4) then new_game() end
+end
+
+function _update60()
+  if scene == "title" then
+    update_menu()
+  elseif scene == "game" then
+    update_game()
+  elseif scene == "game_over" then
+    update_game_over()
+  end
+  blink_timer = (blink_timer + 1) % 60
 end
 
 __gfx__
