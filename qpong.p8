@@ -43,9 +43,9 @@ function QuantumCircuit ()
 
   local qc = {}
 
-  local function set_registers (n,menu)
+  local function set_registers (n,m)
     qc.num_qubits = n
-    qc.num_clbits = menu or 0
+    qc.num_clbits = m or 0
   end
   qc.set_registers = set_registers
 
@@ -88,7 +88,7 @@ function QuantumCircuit ()
   end
 
   function qc.measure (q,b)
-    qc.data[#qc.data+1] = ( {'menu',q,b} )
+    qc.data[#qc.data+1] = ( {'m',q,b} )
   end
 
   function qc.rz (theta,q)
@@ -162,7 +162,7 @@ function simulate (qc, get, shots)
           ket[j] = {amp[1], amp[2]}
       end
 
-    elseif gate[1]=='menu' then
+    elseif gate[1]=='m' then
 
       outputnum_clbitsap[gate[3]] = gate[2]
 
@@ -251,7 +251,7 @@ function simulate (qc, get, shots)
 
     else
 
-      menu = {}
+      m = {}
       for s=1,shots do
         cumu = 0
         un = true
@@ -259,23 +259,23 @@ function simulate (qc, get, shots)
         for j,p in pairs(probs) do
           cumu = cumu + p
           if r<cumu and un then
-            menu[s] = get_out(j)
+            m[s] = get_out(j)
             un = false
           end
         end
       end
 
       if get=="memory" then
-        return menu
+        return m
 
       elseif get=="counts" then
         c = {}
         for s=1,shots do
-          if c[menu[s]] then
-            c[menu[s]] = c[menu[s]] + 1
+          if c[m[s]] then
+            c[m[s]] = c[m[s]] + 1
           else
-            if menu[s] then -- in case of pico8 weirdness
-              c[menu[s]] = 1
+            if m[s] then -- in case of pico8 weirdness
+              c[m[s]] = 1
             else
               if c["error"] then
                 c["error"] = c["error"]+1
@@ -387,6 +387,8 @@ function update_menu()
     new_game()
    elseif menu.options[menu.sel]=="settings" then
     init_settings()
+   elseif menu.options[menu.sel]=="credits" then
+    scene = "credits"
    end
   end
  end
@@ -638,7 +640,7 @@ function draw_game()
   --player
   for y=0,7 do
       local color
-      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'menu allowing .01 error
+      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
       if prob > .99 then
           color = 7
       elseif prob > .49 then
@@ -900,6 +902,16 @@ function update_game_over()
   if btnp(4) then new_game() end
 end
 
+function update_credits()
+  if btnp(4) then scene = "title" end
+end
+
+function draw_credits()
+  print("made by qiskitters with love", 0, 0, 8)
+  authors
+  print("Lee Yi, Lee Yu-Chieh, Zuo Tso-Yen, Jian J-Lee, Leung Shek_Lun, Huang Junye", 0, 0, 10)
+end
+
 function _update60()
   if scene == "title" then
     update_menu()
@@ -907,6 +919,8 @@ function _update60()
     update_game()
   elseif scene == "game_over" then
     update_game_over()
+  elseif scene == "credits" then
+    update_credits()
   end
   blink_timer = (blink_timer + 1) % 60
 end
@@ -926,8 +940,10 @@ function _draw()
       draw_menu()
     elseif scene == "game" then
       draw_game()
-    elseif scene == "game_over"  then
+    elseif scene == "game_over" then
       draw_game_over()
+    elseif scene == "credits" then
+      draw_credits()
     end
 end
 
