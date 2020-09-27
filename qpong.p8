@@ -415,7 +415,7 @@ end
 
 function init_settings()
  menu.sel=1
- menu.options={"palette","controls"}
+ menu.options={"palette"}
  menu.amt=0
  for i in all(menu.options) do
   menu.amt+=1
@@ -824,7 +824,7 @@ function update_game()
   end
 
   --score
-  win_score = 1
+  win_score = 7
   if ball.x > court.right then
       com_points += 1
       scored = "com"
