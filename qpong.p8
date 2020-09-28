@@ -314,13 +314,10 @@ end
 -- init
 ----------------
 function _init()
- pals={{7,0},{15,1},{6,5},
-               {10,8},{7,3},{7,2}}
- palnum=5
- set_scene("title")
- init_menu()
- -- use gameboy palette
- gb_palette()
+  set_scene("title")
+  init_menu()
+  -- use gameboy palette
+  gb_palette()
 end
 
 function set_scene(s)
