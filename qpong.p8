@@ -526,7 +526,7 @@ function update_game()
   end
 
   --score
-  win_score = 7
+  win_score = 1
   if ball.x > court.right then
       com_points += 1
       scored = "com"

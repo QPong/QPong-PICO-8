@@ -1,51 +1,46 @@
-# QPong PICO-8 Blog
+# QPong PICO-8 Blog [I suppose you will come up with a more enticing title?]
 
-Today is the 30th anniversary of Gameboy in Europe. Let's celebrate! Wait, I live in Singapore, why do I care about the anniversary in Europe? Well, because I don't know the Gameboy release date in Singapore, and I missed the 30th anniversary in Japan and North America. 
+Today is Gameboy's 30th anniversary in Europe which means... let's celebrate! Wait, but I live in Singapore, so why is the anniversary in Europe a reason for me to celebrate? Well, simply because I don't know the Gameboy release date in Singapore, and I missed the 30th anniversary in Japan and North America. 
 
-What is a better way to celebrate Gameboy anniversary than making a Gameboy game? I want to port the first game I ever made, QPong to Gameboy. 
+And, what is a better way to celebrate this anniversary than making a Gameboy game? Nothing indeed. And so, I just ported the first game I ever made, QPong, to Gameboy. 
 
 ## What is QPong?
 
-QPong stands for Quake, eh... no, Quantum, Pong. It's a quantum version of the classic video game Pong in which you use a quantum computer to control the paddle to play against an AI powered by classical computers. 
+QPong stands for Quake, eh... no, Quantum, Pong. You guessed it: it's a quantum version of the classic video game Pong. In this version, a quantum computer (controlled by you, the player!) controls the paddle to play against an AI powered by classical computers. 
 
 The story goes as follows:
 
 "In the dawn of the Quantum Era, a primitive 3-qubit Quantum Computer is trying to challenge the Classical Computer, the long-time ruler of the Computer Empire. Your mission is to use your Human Intelligence to help the Quantum Computer defeat the Classical Computer and demonstrate "quantum supremacy" for the first time in human history. The battle field of the Quantum-Classic war is none other than the classic Pong game."
 
-Pardon my story writing skills... If Super Mario Bros. can sell without having a great storyline, so can QPong. 
+I hope you won't mind my storytelling skills... If Super Mario Bros. can sell without having a great storyline, so can QPong. 
 
-So, in QPong, the paddle position is determined by a quantum circuit. 
+Your mission in QPong is to determine the paddle position is by  playing around with a quantum circuit. YOU become the quantum better.
 
-
-What is Quantum Computing
-
-What is Quantum Circuits?
-
-What is Superposition?
 
 ## How do I make a Gameboy game?
 
-I think I talked enough about QPong. Now let's talk about how to port it to Gameboy. I have spent sometime digging how to make a Gameboy game a while ago and there are many excellent resources out there and a vibrant community. The best way to make it is to use assembly. Alternatively I can use GBDK with C. I have never coded in assembly and I have long forgotten my C skill. Plus, you will need to learn all the nitty gritty of Gameboy hardware, to be able to make a game. 
+Enough about QPong. After all, we are here to celebrate the Gameboy today. So, how did I port QPong to Gameboy?
 
-I would really love to make a native Gameboy port of QPong, but it will take way more efforts that I can afford. It certainly would have taken my much longer time and I will miss 30th anniversary for Europe as well. Maybe 40th anniversary :)
+I spent sometime digging how to make a Gameboy game a while ago and I found out there are many excellent resources and a vibrant community out there. This is what they say: The best way to port a game it is to use assembly. Alternatively you can use GBDK with C. Oh, and did I mention you would also have to learn all the nitty gritty of Gameboy hardware to be able to make a native game? 
+
+Unfortunately, I have never coded in assembly and I have long forgotten my C skills. You guessed, although I would really love to make a native Gameboy port of QPong, this would take way more efforts that I can afford. And I would certainly miss 30th anniversary for Europe as well. I shall start learning now, to be ready for the 40th anniversary :)
 
 Since I didn't have time to make a native Gameboy game, I looked for alternative ways to make a game that looks like a Gameboy game. 
 
-At the end I decided to use PICO-8, a NES-like fantasy console. It's extremely simple to make games on it. It has a 1:1 display aspect ratio, very close to 10:9 in the original gameboy. With a well chosen color palette, PICO-8 games can look very similar to Gameboy games. I also have a GameShell machine which can run PICO-8 and it looks very similar to a Gameboy Pocket. Plus, PICO-8 games can be run on a browser which means I can share the game online and thousands of people will be able to play it.
+At the end I decided to use PICO-8, a NES-like fantasy console. It's extremely simple to make games on it. It has a 1:1 display aspect ratio, very close to the the original 10:9 in gameboy. With a well chosen color palette, PICO-8 games can look very similar to Gameboy games. I also have a GameShell machine which can run PICO-8 and looks so similar to a Gameboy Pocket that my wife keeps thinking I stole her childhood console. Plus, PICO-8 games can be run on a browser which means I can share the game online and thousands of people will be able to play it.
 
 ## Porting QPong to PICO-8
 
+As I mentioned before [where?], the original QPong was written in Python using PyGame game engine and Qiskit quantum software. But PICO-8 uses Lua, not Python. Fortunately my best friend, who is also the "father of quantum games", Dr. James Wootton aka Wrangler of Qubits has created something called MicroQiskit. MicroQiskit is the minimal implementation of Qiskit in different programming languages, including Lua. Even though MicroQiskit doesn't have many of Qiskit's awesome features, it can construct and simulate quantum circuits. And that's all QPong needed. 
 
-
-As I mentioned before, the original QPong was written in python using PyGame game engine and Qiskit quantum software. But PICO-8 uses Lua, not Python. Fortunately my best friend and "father of quantum games" Dr. James Wootton, aka Wrangler of Qubits has created something called MicroQiskit. MicroQiskit is the minimal implementation of Qiskit in different programming languages, including Lua. Even though MicroQiskit doesn't have many awesome features of Qiskit, it can construct and simulate quantum circuits. And that's all we need for making QPong. 
-
-To make QPong, we first need to make a CPong. Good artists borrow, Great artists steals and Smart programmers just copy. I simply copied the code of a PICO-8 Pong game from a website and started from there. 
+The first step to QPong is, you guessed it, CPong. As the saying goes, "Good artists borrow, Great artists steals and Smart programmers just copy". So I simply copied the code of a PICO-8 CPong game from a website [link] and started from there. 
 
 The second important piece is the circuit composer. 
 
-When I finally decided to make a PICO-8 port of QPong, it was August 22, slightly more than a month ago. I could spend one hour per day to finish the project. But I am a lazy smart ass. I asked someone else to do most of the work. 
+[I am not sure I like this paragraph. What is the message besides self-denigration?] When I finally decided to make a PICO-8 port of QPong, it was August 22, slightly more than a month ago. I could spend one hour per day to finish the project. But I am a lazy smart ass. I asked someone else to do most of the work. [maybe something like this?]
+When I finally decided to make a PICO-8 port of QPong, it was August 22, slightly a month away from Gameboy's European 30th anniversary. With one hour a day available to work on it and a demanding newborn screaming at home... My project had no chances.
 
-Around that time, the organisers of Qiskit Hackathon Taiwan contacted to me to suggest project ideas. It was a perfect timing. So I suggested porting QPong to PICO-8 as one of the project. And indeed a few people decided to work on the project. And within 2 days, PICO-8 port of QPong was born!
+I was lucky enough that around that time the organisers of Qiskit Hackathon Taiwan contacted to me to suggest project ideas. It was a perfect timing. Of course, I took this chance to suggested porting QPong to PICO-8 as one of the projects. A few people decided to work on it and... within 2 days, the PICO-8 port of QPong was born!
 
 
 
