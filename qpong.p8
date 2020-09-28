@@ -300,6 +300,8 @@ end
 scored = ""
 blink_timer = 0
 
+-- init
+
 function _init()
  pals={{7,0},{15,1},{6,5},
                {10,8},{7,3},{7,2}}
@@ -312,22 +314,22 @@ end
 
 function set_scene(s)
   if s == "title" then
-    _update60 = title_update
-    _draw = title_draw
+    _update60 = update_title
+    _draw = draw_title
   elseif s == "game" then
-    _update60 = game_update
-    _draw = game_draw
+    _update60 = update_game
+    _draw = draw_game
   elseif s == "game_over" then
-    _update60 = game_over_update
-    _draw = game_over_draw
+    _update60 = update_game_over
+    _draw = draw_game_over
   elseif s == "credits" then
-    _update60 = credits_update
-    _draw = credits_draw
+    _update60 = update_credits
+    _draw = draw_credits
   end
 end
 
 -- title
-function title_update()
+function update_title()
  update_cursor()
  if sub_mode==0 then
   if btnp(4) and
@@ -348,7 +350,7 @@ function title_update()
  menu_timer+=1
 end
 
-function title_draw()
+function draw_title()
   cls()
   draw_game_logo()
   draw_options()
@@ -363,7 +365,7 @@ end
 
 -- game
 
-function game_draw()
+function draw_game()
   cls()
   --court
   rect(court.left,court.top,court.right,court.bottom,court.color)
@@ -459,7 +461,7 @@ function game_draw()
   print(com_points,58,2,com.color)
 end
 
-function game_update()
+function update_game()
   if btnp(2) and cursor.row > 0 then
       cursor.row -= 1
   end
@@ -613,11 +615,11 @@ end
 
 -- game over
 
-function game_over_update()
+function update_game_over()
   if btnp(4) then new_game() end
 end
 
-function game_over_draw()
+function draw_game_over()
   cls()
 
   blink_timer = (blink_timer + 1) % 60
@@ -653,11 +655,11 @@ end
 
 -- credits
 
-function credits_update()
+function update_credits()
   if btnp(4) then set_scene("title") end
 end
 
-function credits_draw()
+function draw_credits()
   cls()
   print("made during", 4, 8, 9)
   print("qiskit hackathon taiwan 2020", 4*2, 8*2, 7)
