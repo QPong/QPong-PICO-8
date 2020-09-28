@@ -300,87 +300,33 @@ end
 scored = ""
 blink_timer = 0
 
-function gb_palette()
-  -- gameboy color palette
-
-  green_0 = 0xf1 -- darkest green
-  green_1 = 0x93 -- dark green
-  green_2 = 0x23 -- light green
-  green_3 = 0xfb -- lightest green
-
-  poke(0x5f10+0, green_0)
-  poke(0x5f10+1, green_1)
-  poke(0x5f10+2, green_2)
-  poke(0x5f10+3, green_2)
-  poke(0x5f10+4, green_0)
-  poke(0x5f10+5, green_1)
-  poke(0x5f10+6, green_2)
-  poke(0x5f10+7, green_3)
-  poke(0x5f10+8, green_1)
-  poke(0x5f10+9, green_1)
-  poke(0x5f10+10, green_3)
-  poke(0x5f10+11, green_1)
-  poke(0x5f10+12, green_1)
-  poke(0x5f10+13, green_1)
-  poke(0x5f10+14, green_2)
-  poke(0x5f10+15, green_3)
-
+function _init()
+ pals={{7,0},{15,1},{6,5},
+               {10,8},{7,3},{7,2}}
+ palnum=5
+ set_scene("title")
+ init_menu()
+ -- use gameboy palette
+ gb_palette()
 end
 
-function pico8_palette()
-  -- pico-8 original palette
-
-  for i = 0, 15 do
-    poke(0x5f10+i, i)
+function set_scene(s)
+  if s == "title" then
+    _update60 = title_update
+    _draw = title_draw
+  elseif s == "game" then
+    _update60 = game_update
+    _draw = game_draw
+  elseif s == "game_over" then
+    _update60 = game_over_update
+    _draw = game_over_draw
+  elseif s == "credits" then
+    _update60 = credits_update
+    _draw = credits_draw
   end
 end
 
---menu system
---by pixelcod
-
-function lerp(startv,endv,per)
- return(startv+per*(endv-startv))
-end
-
-function update_cursor()
- if (btnp(2)) menu.sel-=1 cx=menu.x sfx(0)
- if (btnp(3)) menu.sel+=1 cx=menu.x sfx(0)
- if (btnp(4)) cx=menu.x sfx(1)
- if (btnp(5)) sfx(2)
- if (menu.sel>menu.amt) menu.sel=1
- if (menu.sel<=0) menu.sel=menu.amt
-
- cx=lerp(cx,menu.x+5,0.5)
-end
-
-function draw_options()
- for i=1, menu.amt do
-  oset=i*8
-  if i==menu.sel then
-   rectfill(cx,menu.y+oset-1,cx+4*7,menu.y+oset+5,col1)
-   print(menu.options[i],cx+1,menu.y+oset,col2)
-  else
-   print(menu.options[i],menu.x,menu.y+oset,col1)
-  end
- end
-end
-
-function init_menu()
- menu={}
- menu.x=50
- cx=menu.x
- menu.y=70
- menu.options={"start","colors",
-            "credits"}
- menu.amt=0
- for i in all(menu.options) do
-  menu.amt+=1
- end
- menu.sel=1
- sub_mode=0
- menu_timer=0
-end
-
+-- title
 function title_update()
  update_cursor()
  if sub_mode==0 then
@@ -402,189 +348,20 @@ function title_update()
  menu_timer+=1
 end
 
-function game_draw_logo()
+function title_draw()
+  cls()
+  draw_game_logo()
+  draw_options()
+end
+
+function draw_game_logo()
   sspr(0,32,64,16,32,30)
   print("made by qiskitters with", 4*3, 120, 6)
   print("qiskitters", 4*11, 120, 12)
   print("\135", 4*27, 120, 8)
 end
 
-function title_draw()
-  cls()
-  game_draw_logo()
-  draw_options()
-end
-
-function init_settings()
- menu.sel=1
- menu.options={"gameboy", "pico-8"}
- menu.amt=0
- for i in all(menu.options) do
-  menu.amt+=1
- end
- sub_mode=1
- menu_timer=0
-end
-
-function update_settings()
- if (btnp(5)) init_menu()
- if btnp(4) and
- menu_timer>1 then
-  if menu.options[menu.sel]=="gameboy" then
-    gb_palette()
-  elseif menu.options[menu.sel]=="pico-8" then
-    pico8_palette()
-  end
- end
-end
-
-function _init()
- pals={{7,0},{15,1},{6,5},
-               {10,8},{7,3},{7,2}}
- palnum=5
- set_scene("title")
- init_menu()
- -- use gameboy palette
- gb_palette()
-end
-
-function new_game()
-    set_scene("game")
-    player_points = 0
-    com_points = 0
-
-    --variables
-    counter=0
-    player={
-        x = 117,
-        y = 63,
-        color = 7,
-        width = 2,
-        height = 10,
-        speed = 1
-    }
-    com={
-        x = 8,
-        y = 63,
-        color = 7,
-        width = 2,
-        height = 10,
-        speed = 0
-    }
-    gate_type={
-        x = 0,
-        y = 1,
-        z = 2,
-        h = 3
-    }
-    gate_seq={
-      I=1,
-      X=2,
-      Y=3,
-      Z=4,
-      H=5
-    }
-    gates={
-        {1,1,1,1,1,1,1,1},
-        {1,1,1,1,1,1,1,1},
-        {1,1,1,1,1,1,1,1}
-    }
-    -- Relative frequency of the measurement results
-    -- Obtained from simulator
-    probs = {1, 0, 0, 0, 0, 0, 0, 0}
-  --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
-  --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
-
-    -- How many updates left does the paddle stays measured
-    measured_timer = 0
-
-    cursor = {
-        row=0,
-        column=0,
-        x=0,
-        y=0,
-        sprite=16
-    }
-    --sound
-    if scored=="player" then
-        sfx(3)
-    elseif scored=="com" then
-        sfx(4)
-    else
-        sfx(5)
-    end
-    --court
-    court={
-        left=0,
-        right=127,
-        top=0,
-        bottom=82,
-        edge=107, --when ball collide this line, measure the circuit
-        color=5
-    }
-    --court center line
-    dash_line={
-        x=63,
-        y=0,
-        length=1.5,
-        color=5
-    }
-    --circuit composer
-    composer={
-        left=0,
-        right=127,
-        top=82,
-        bottom=127,
-        color=6
-    }
-    qubit_line={
-        x=10,
-        y=90,
-        length=108,
-        separation=15,
-        color=5
-    }
-    new_round()
-end
-
-function game_over_draw()
-  cls()
-
-  blink_timer = (blink_timer + 1) % 60
-
-  if scored == "player" then
-    --player win
-    print("you demostrated", 8, 28, 8)
-    -- quantum advantgage
-    sspr(0,80,80,16,24,40)
-    -- cat
-    sspr(16,64,16,16,2,94,32,32)
-
-    draw_qiskit_logo(100,10)
-
-    print("for the first time ",44,58,8)
-    print("in human history!",56,66,8)
-  else
-    --com win
-    print("classical computers",8,28,8)
-    print("still rule the world!",40,50,8)
-    --cat
-    sspr(0,64,16,16,2,94,32,32)
-
-    --computer
-    sspr(32,64,16,16,96,4,32,32)
-  end
-
-  --restart
-  if blink_timer < 40 then
-      print("press z/\142 to restart", 24, 80, 10)
-  end
-end
-
-function draw_qiskit_logo(x,y)
-  sspr(48,64,16,16,x,y)
-  print("qiskit", x-3, y+19, 6)
-end
+-- game
 
 function game_draw()
   cls()
@@ -680,93 +457,6 @@ function game_draw()
   --scores
   print(player_points,66,2,player.color)
   print(com_points,58,2,com.color)
-end
-
-function new_round()
-  if scored == "player" then
-      ball={
-          x = 30,
-          y = 30 + rnd(5),
-          color = 7,
-          width = 2,
-          dx = 0.6,
-          dy = rnd() - 0.5,
-          speed = 1,
-          speedup = 0.05
-      }
-  else
-      ball={
-          x = 98,
-          y = 30 + rnd(5),
-          color = 7,
-          width = 2,
-          dx = -0.6,
-          dy = rnd() - 0.5,
-          speed = 1,
-          speedup = 0.05
-      }
-  end
-end
-
-function sim_cir()
-    qc = QuantumCircuit()
-    qc.set_registers(3,3)
-    for slots = 1,8 do
-      for wires = 1,3 do
-       if (gates[wires][slots] == 2) then
-          qc.x(wires-1)
-
-        elseif (gates[wires][slots] == 3) then
-          qc.y(wires-1)
-
-        elseif (gates[wires][slots] == 4) then
-          qc.z(wires-1)
-
-        elseif (gates[wires][slots] == 5) then
-          qc.h(wires-1)
-        end
-      end
-    end
-
-    qc.measure(0,0)
-    qc.measure(1,1)
-    qc.measure(2,2)
-
-    result = simulate(qc,'expected_counts',1)
-
-    for key, value in pairs(result) do
-      print(key,value)
-      idx = tonum('0b'..key) + 1
-      probs[idx]=value
-    end
-end
-
-function meas_prob()
-    idx = -1
-    math.randomseed(os.time())
-    r=math.random()
-    --r =0.2
-    --print(r)
-    num =0
-    for i = 1,8 do
-
-        if (r > probs[i]) then
-            num=r-probs[i]
-            r=num
-
-        elseif (r<=probs[i]) then
-            idx = i
-            break
-        end
-    end
-    for i = 1,8 do
-        if i==idx then
-            probs[i]=1
-        else
-            probs[i]=0
-        end
-    end
-    return idx
 end
 
 function game_update()
@@ -895,9 +585,73 @@ function game_update()
   ball.y += ball.dy
 end
 
+function new_round()
+  if scored == "player" then
+      ball={
+          x = 30,
+          y = 30 + rnd(5),
+          color = 7,
+          width = 2,
+          dx = 0.6,
+          dy = rnd() - 0.5,
+          speed = 1,
+          speedup = 0.05
+      }
+  else
+      ball={
+          x = 98,
+          y = 30 + rnd(5),
+          color = 7,
+          width = 2,
+          dx = -0.6,
+          dy = rnd() - 0.5,
+          speed = 1,
+          speedup = 0.05
+      }
+  end
+end
+
+-- game over
+
 function game_over_update()
   if btnp(4) then new_game() end
 end
+
+function game_over_draw()
+  cls()
+
+  blink_timer = (blink_timer + 1) % 60
+
+  if scored == "player" then
+    --player win
+    print("you demostrated", 8, 28, 8)
+    -- quantum advantgage
+    sspr(0,80,80,16,24,40)
+    -- cat
+    sspr(16,64,16,16,2,94,32,32)
+
+    draw_qiskit_logo(100,10)
+
+    print("for the first time ",44,58,8)
+    print("in human history!",56,66,8)
+  else
+    --com win
+    print("classical computers",8,28,8)
+    print("still rule the world!",40,50,8)
+    --cat
+    sspr(0,64,16,16,2,94,32,32)
+
+    --computer
+    sspr(32,64,16,16,96,4,32,32)
+  end
+
+  --restart
+  if blink_timer < 40 then
+      print("press z/\142 to restart", 24, 80, 10)
+  end
+end
+
+-- credits
 
 function credits_update()
   if btnp(4) then set_scene("title") end
@@ -921,21 +675,208 @@ function credits_draw()
   draw_qiskit_logo(90,50)
 end
 
-function set_scene(s)
-  if s == "title" then
-    _update60 = title_update
-    _draw = title_draw
-  elseif s == "game" then
-    _update60 = game_update
-    _draw = game_draw
-  elseif s == "game_over" then
-    _update60 = game_over_update
-    _draw = game_over_draw
-  elseif s == "credits" then
-    _update60 = credits_update
-    _draw = credits_draw
+function draw_qiskit_logo(x,y)
+  sspr(48,64,16,16,x,y)
+  print("qiskit", x-3, y+19, 6)
+end
+
+-- qiskit
+
+function sim_cir()
+    qc = QuantumCircuit()
+    qc.set_registers(3,3)
+    for slots = 1,8 do
+      for wires = 1,3 do
+       if (gates[wires][slots] == 2) then
+          qc.x(wires-1)
+
+        elseif (gates[wires][slots] == 3) then
+          qc.y(wires-1)
+
+        elseif (gates[wires][slots] == 4) then
+          qc.z(wires-1)
+
+        elseif (gates[wires][slots] == 5) then
+          qc.h(wires-1)
+        end
+      end
+    end
+
+    qc.measure(0,0)
+    qc.measure(1,1)
+    qc.measure(2,2)
+
+    result = simulate(qc,'expected_counts',1)
+
+    for key, value in pairs(result) do
+      print(key,value)
+      idx = tonum('0b'..key) + 1
+      probs[idx]=value
+    end
+end
+
+function meas_prob()
+    idx = -1
+    math.randomseed(os.time())
+    r=math.random()
+    --r =0.2
+    --print(r)
+    num =0
+    for i = 1,8 do
+
+        if (r > probs[i]) then
+            num=r-probs[i]
+            r=num
+
+        elseif (r<=probs[i]) then
+            idx = i
+            break
+        end
+    end
+    for i = 1,8 do
+        if i==idx then
+            probs[i]=1
+        else
+            probs[i]=0
+        end
+    end
+    return idx
+end
+
+-- menu
+
+function lerp(startv,endv,per)
+ return(startv+per*(endv-startv))
+end
+
+function update_cursor()
+ if (btnp(2)) menu.sel-=1 cx=menu.x sfx(0)
+ if (btnp(3)) menu.sel+=1 cx=menu.x sfx(0)
+ if (btnp(4)) cx=menu.x sfx(1)
+ if (btnp(5)) sfx(2)
+ if (menu.sel>menu.amt) menu.sel=1
+ if (menu.sel<=0) menu.sel=menu.amt
+
+ cx=lerp(cx,menu.x+5,0.5)
+end
+
+function draw_options()
+ for i=1, menu.amt do
+  oset=i*8
+  if i==menu.sel then
+   rectfill(cx,menu.y+oset-1,cx+4*7,menu.y+oset+5,col1)
+   print(menu.options[i],cx+1,menu.y+oset,col2)
+  else
+   print(menu.options[i],menu.x,menu.y+oset,col1)
+  end
+ end
+end
+
+function init_menu()
+ menu={}
+ menu.x=50
+ cx=menu.x
+ menu.y=70
+ menu.options={"start","colors",
+            "credits"}
+ menu.amt=0
+ for i in all(menu.options) do
+  menu.amt+=1
+ end
+ menu.sel=1
+ sub_mode=0
+ menu_timer=0
+end
+
+function init_settings()
+ menu.sel=1
+ menu.options={"gameboy", "pico-8"}
+ menu.amt=0
+ for i in all(menu.options) do
+  menu.amt+=1
+ end
+ sub_mode=1
+ menu_timer=0
+end
+
+function update_settings()
+ if (btnp(5)) init_menu()
+ if btnp(4) and
+ menu_timer>1 then
+  if menu.options[menu.sel]=="gameboy" then
+    gb_palette()
+  elseif menu.options[menu.sel]=="pico-8" then
+    pico8_palette()
+  end
+ end
+end
+
+-- color palette
+
+function gb_palette()
+  -- gameboy color palette
+
+  green_0 = 0xf1 -- darkest green
+  green_1 = 0x93 -- dark green
+  green_2 = 0x23 -- light green
+  green_3 = 0xfb -- lightest green
+
+  poke(0x5f10+0, green_0)
+  poke(0x5f10+1, green_1)
+  poke(0x5f10+2, green_2)
+  poke(0x5f10+3, green_2)
+  poke(0x5f10+4, green_0)
+  poke(0x5f10+5, green_1)
+  poke(0x5f10+6, green_2)
+  poke(0x5f10+7, green_3)
+  poke(0x5f10+8, green_1)
+  poke(0x5f10+9, green_1)
+  poke(0x5f10+10, green_3)
+  poke(0x5f10+11, green_1)
+  poke(0x5f10+12, green_1)
+  poke(0x5f10+13, green_1)
+  poke(0x5f10+14, green_2)
+  poke(0x5f10+15, green_3)
+
+end
+
+function pico8_palette()
+  -- pico-8 original palette
+
+  for i = 0, 15 do
+    poke(0x5f10+i, i)
   end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 __gfx__
 77777771777777717777777177777771000000000000000010000000010000000000000000000000000000000000000000000000000000000000000000000000
