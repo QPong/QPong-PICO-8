@@ -381,7 +381,7 @@ function init_menu()
  menu_timer=0
 end
 
-function update_title()
+function title_update()
  update_cursor()
  if sub_mode==0 then
   if btnp(4) and
@@ -402,16 +402,16 @@ function update_title()
  menu_timer+=1
 end
 
-function draw_game_logo()
+function game_draw_logo()
   sspr(0,32,64,16,32,30)
   print("made by qiskitters with", 4*3, 120, 6)
   print("qiskitters", 4*11, 120, 12)
   print("\135", 4*27, 120, 8)
 end
 
-function draw_title()
+function title_draw()
   cls()
-  draw_game_logo()
+  game_draw_logo()
   draw_options()
 end
 
@@ -547,7 +547,7 @@ function new_game()
     new_round()
 end
 
-function draw_game_over()
+function game_over_draw()
   cls()
 
   blink_timer = (blink_timer + 1) % 60
@@ -586,7 +586,7 @@ function draw_qiskit_logo(x,y)
   print("qiskit", x-3, y+19, 6)
 end
 
-function draw_game()
+function game_draw()
   cls()
   --court
   rect(court.left,court.top,court.right,court.bottom,court.color)
@@ -769,7 +769,7 @@ function meas_prob()
     return idx
 end
 
-function update_game()
+function game_update()
   if btnp(2) and cursor.row > 0 then
       cursor.row -= 1
   end
@@ -895,15 +895,15 @@ function update_game()
   ball.y += ball.dy
 end
 
-function update_game_over()
+function game_over_update()
   if btnp(4) then new_game() end
 end
 
-function update_credits()
+function credits_update()
   if btnp(4) then set_scene("title") end
 end
 
-function draw_credits()
+function credits_draw()
   cls()
   print("made during", 4, 8, 9)
   print("qiskit hackathon taiwan 2020", 4*2, 8*2, 7)
@@ -923,17 +923,17 @@ end
 
 function set_scene(s)
   if s == "title" then
-    _update60 = update_title
-    _draw = draw_title
+    _update60 = title_update
+    _draw = title_draw
   elseif s == "game" then
-    _update60 = update_game
-    _draw = draw_game
+    _update60 = game_update
+    _draw = game_draw
   elseif s == "game_over" then
-    _update60 = update_game_over
-    _draw = draw_game_over
+    _update60 = game_over_update
+    _draw = game_over_draw
   elseif s == "credits" then
-    _update60 = update_credits
-    _draw = draw_credits
+    _update60 = credits_update
+    _draw = credits_draw
   end
 end
 
