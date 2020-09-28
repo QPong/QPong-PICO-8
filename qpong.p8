@@ -4,11 +4,23 @@ __lua__
 -- qpong
 -- by qiskiters
 
+----------------------------------------------------------------------
+-- QPong PICO-8 version
+-- Source code: https://github.com/HuangJunye/QPong-PICO-8
+-- Made during Qiskit Hackathon Taiwan
+-- Authors: Jian J-Lee, Lee Yi, Lee Yu-Chieh, Zuo Tso-Yen
+-- Coaches: Huang Junye, Leung Shek Lun
+
+-- Original QPong Python version
+-- Source code: https://github.com/HuangJunye/QPong
+-- Made during Qiskit Camp Flagship 2019
+-- Authors: Huang Junye, Jarrod Reilly, Anastasia Jeffery
+-- Coach: James Weaver
+----------------------------------------------------------------------
+
 -- math.p8
 -- This code is part of Qiskit.
---
 -- Copyright IBM 2020
-
 -- Custom math table for compatibility with the Pico8
 
 math = {}
@@ -32,9 +44,7 @@ function os.time()
 end
 
 -- MicroQiskit.lua
-
 -- This code is part of Qiskit.
---
 -- Copyright IBM 2020
 
 math.randomseed(os.time())
@@ -295,13 +305,15 @@ function simulate (qc, get, shots)
 
 end
 
+----------------------------------------------------------------------
 -- QPong
-
+----------------------------------------------------------------------
 scored = ""
 blink_timer = 0
 
+----------------
 -- init
-
+----------------
 function _init()
  pals={{7,0},{15,1},{6,5},
                {10,8},{7,3},{7,2}}
@@ -328,7 +340,9 @@ function set_scene(s)
   end
 end
 
+----------------
 -- title
+----------------
 function update_title()
  update_cursor()
  if sub_mode==0 then
@@ -363,8 +377,9 @@ function draw_game_logo()
   print("\135", 4*27, 120, 8)
 end
 
+----------------
 -- game
-
+----------------
 function draw_game()
   cls()
   --court
@@ -587,6 +602,105 @@ function update_game()
   ball.y += ball.dy
 end
 
+function new_game()
+    set_scene("game")
+    player_points = 0
+    com_points = 0
+
+    --variables
+    counter=0
+    player={
+        x = 117,
+        y = 63,
+        color = 7,
+        width = 2,
+        height = 10,
+        speed = 1
+    }
+    com={
+        x = 8,
+        y = 63,
+        color = 7,
+        width = 2,
+        height = 10,
+        speed = 0
+    }
+    gate_type={
+        x = 0,
+        y = 1,
+        z = 2,
+        h = 3
+    }
+    gate_seq={
+      I=1,
+      X=2,
+      Y=3,
+      Z=4,
+      H=5
+    }
+    gates={
+        {1,1,1,1,1,1,1,1},
+        {1,1,1,1,1,1,1,1},
+        {1,1,1,1,1,1,1,1}
+    }
+    -- Relative frequency of the measurement results
+    -- Obtained from simulator
+    probs = {1, 0, 0, 0, 0, 0, 0, 0}
+  --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
+  --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
+
+    -- How many updates left does the paddle stays measured
+    measured_timer = 0
+
+    cursor = {
+        row=0,
+        column=0,
+        x=0,
+        y=0,
+        sprite=16
+    }
+    --sound
+    if scored=="player" then
+        sfx(3)
+    elseif scored=="com" then
+        sfx(4)
+    else
+        sfx(5)
+    end
+    --court
+    court={
+        left=0,
+        right=127,
+        top=0,
+        bottom=82,
+        edge=107, --when ball collide this line, measure the circuit
+        color=5
+    }
+    --court center line
+    dash_line={
+        x=63,
+        y=0,
+        length=1.5,
+        color=5
+    }
+    --circuit composer
+    composer={
+        left=0,
+        right=127,
+        top=82,
+        bottom=127,
+        color=6
+    }
+    qubit_line={
+        x=10,
+        y=90,
+        length=108,
+        separation=15,
+        color=5
+    }
+    new_round()
+end
+
 function new_round()
   if scored == "player" then
       ball={
@@ -613,8 +727,9 @@ function new_round()
   end
 end
 
+----------------
 -- game over
-
+----------------
 function update_game_over()
   if btnp(4) then new_game() end
 end
@@ -653,8 +768,9 @@ function draw_game_over()
   end
 end
 
+----------------
 -- credits
-
+----------------
 function update_credits()
   if btnp(4) then set_scene("title") end
 end
@@ -682,8 +798,9 @@ function draw_qiskit_logo(x,y)
   print("qiskit", x-3, y+19, 6)
 end
 
--- qiskit
-
+----------------
+-- quantum circuits
+----------------
 function sim_cir()
     qc = QuantumCircuit()
     qc.set_registers(3,3)
@@ -745,8 +862,9 @@ function meas_prob()
     return idx
 end
 
+----------------
 -- menu
-
+----------------
 function lerp(startv,endv,per)
  return(startv+per*(endv-startv))
 end
@@ -813,8 +931,9 @@ function update_settings()
  end
 end
 
+----------------
 -- color palette
-
+----------------
 function gb_palette()
   -- gameboy color palette
 
@@ -849,36 +968,6 @@ function pico8_palette()
     poke(0x5f10+i, i)
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 __gfx__
 77777771777777717777777177777771000000000000000010000000010000000000000000000000000000000000000000000000000000000000000000000000
