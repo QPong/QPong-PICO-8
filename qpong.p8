@@ -864,6 +864,8 @@ end
 
 ----------------
 -- menu
+-- by PixelCode
+-- Source code: https://www.lexaloffle.com/bbs/?tid=27725
 ----------------
 function lerp(startv,endv,per)
  return(startv+per*(endv-startv))
@@ -933,6 +935,8 @@ end
 
 ----------------
 -- color palette
+-- Inspired by @TheUnproPro
+-- Source code: https://twitter.com/TheUnproPro/status/1168665614896062468
 ----------------
 function gb_palette()
   -- gameboy color palette
