@@ -452,7 +452,7 @@ function _init()
  palnum=5
  scene = "title"
  init_menu()
- -- use gameboy color palette
+ -- use gameboy palette
  gb_palette()
 end
 
@@ -571,11 +571,7 @@ function draw_game_over()
     --cat
     sspr(25,97,16,16,0,96,32,32)
 
-    --qiskit
-    spr(199,100,10)
-    spr(200,108,10)
-    spr(215,100,18)
-    spr(216,108,18)
+    draw_qiskit_logo(100,10)
 
     print("for the first time ",53,46,8)
     print("in human history!",53,54,8)
@@ -598,6 +594,15 @@ function draw_game_over()
   if blink_timer < 40 then
       print("press z to restart", 30, 80, 10)
   end
+end
+
+function draw_qiskit_logo(x,y)
+  --qiskit
+  spr(199,x,y)
+  spr(200,x+8,y)
+  spr(215,x,y+8)
+  spr(216,x+8,y+8)
+  print("qiskit", x-3, y+19)
 end
 
 function draw_game()
@@ -929,6 +934,8 @@ function draw_credits()
 
   print("coaches", xoffset, yoffset+44, 12)
   for i, name in ipairs(coaches) do print(name, xoffset+4, yoffset+44+i*8, 7) end
+
+  draw_qiskit_logo(90,50)
 end
 
 function _update60()
