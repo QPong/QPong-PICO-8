@@ -300,8 +300,8 @@ end
 scored = ""
 blink_timer = 0
 
-function gbvram()
-  -- remap gameboy color pallette
+function gb_palette()
+  -- gameboy color palette
 
   green_0 = 0xf1 -- darkest green
   green_1 = 0x93 -- dark green
@@ -327,6 +327,14 @@ function gbvram()
 
 end
 
+function pico8_palette()
+  -- pico-8 original palette
+
+  for i = 0, 15 do
+    poke(0x5f10+i, i)
+  end
+end
+
 --menu system
 --by pixelcod
 
@@ -349,7 +357,7 @@ function draw_options()
  for i=1, menu.amt do
   oset=i*8
   if i==menu.sel then
-   rectfill(cx,menu.y+oset-1,cx+32,menu.y+oset+5,col1)
+   rectfill(cx,menu.y+oset-1,cx+4*7,menu.y+oset+5,col1)
    print(menu.options[i],cx+1,menu.y+oset,col2)
   else
    print(menu.options[i],menu.x,menu.y+oset,col1)
@@ -362,7 +370,7 @@ function init_menu()
  menu.x=50
  cx=menu.x
  menu.y=70
- menu.options={"start","settings",
+ menu.options={"start","colors",
             "credits"}
  menu.amt=0
  for i in all(menu.options) do
@@ -380,7 +388,7 @@ function update_menu()
   menu_timer>1 then
    if menu.options[menu.sel]=="start" then
     new_game()
-   elseif menu.options[menu.sel]=="settings" then
+   elseif menu.options[menu.sel]=="colors" then
     init_settings()
    elseif menu.options[menu.sel]=="credits" then
     scene = "credits"
@@ -415,7 +423,7 @@ end
 
 function init_settings()
  menu.sel=1
- menu.options={"palette"}
+ menu.options={"gameboy", "pico-8"}
  menu.amt=0
  for i in all(menu.options) do
   menu.amt+=1
@@ -428,8 +436,10 @@ function update_settings()
  if (btnp(5)) init_menu()
  if btnp(4) and
  menu_timer>1 then
-  if menu.options[menu.sel]=="palette" then
-   gbvram()
+  if menu.options[menu.sel]=="gameboy" then
+    gb_palette()
+  elseif menu.options[menu.sel]=="pico-8" then
+    pico8_palette()
   end
  end
 end
@@ -934,7 +944,7 @@ end
 
 function _draw()
     cls()
-    --gbvram() -- gameboy color pallette
+    --gb_palette() -- gameboy color pallette
 
     -- test color pallette swapping
     --[[
