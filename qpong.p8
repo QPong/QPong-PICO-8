@@ -402,22 +402,16 @@ function update_menu()
  menu_timer+=1
 end
 
-function draw_logo()
-  for i = 0, 10 do
-    for j = 0, 1 do
-        spr(64 + i + 16 * j,
-            32 + 8 * i,
-            30 + 8 * j)
-    end
-  end
+function draw_game_logo()
+  sspr(0,32,64,16,32,30)
   print("made by qiskitters with", 4*3, 120, 6)
   print("qiskitters", 4*11, 120, 12)
   print("\135", 4*27, 120, 8)
 end
 
-function draw_menu()
+function draw_title()
   cls()
-  draw_logo()
+  draw_game_logo()
   draw_options()
 end
 
@@ -948,7 +942,7 @@ function _draw()
     ]]
 
     if scene == "title" then
-      draw_menu()
+      draw_title()
     elseif scene == "game" then
       draw_game()
     elseif scene == "game_over" then
