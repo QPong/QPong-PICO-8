@@ -452,6 +452,8 @@ function _init()
  palnum=5
  scene = "title"
  init_menu()
+ -- use gameboy color palette
+ gb_palette()
 end
 
 function new_game()
