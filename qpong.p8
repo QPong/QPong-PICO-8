@@ -2,13 +2,25 @@ pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
 -- qpong
--- by qiskiters
+-- by qiskitters
+
+----------------------------------------------------------------------
+-- QPong PICO-8 version
+-- Source code: https://github.com/HuangJunye/QPong-PICO-8
+-- Made during Qiskit Hackathon Taiwan
+-- Authors: Jian J-Lee, Lee Yi, Lee Yu-Chieh, Zuo Tso-Yen
+-- Coaches: Huang Junye, Leung Shek Lun
+
+-- Original QPong Python version
+-- Source code: https://github.com/HuangJunye/QPong
+-- Made during Qiskit Camp Flagship 2019
+-- Authors: Huang Junye, Jarrod Reilly, Anastasia Jeffery
+-- Coach: James Weaver
+----------------------------------------------------------------------
 
 -- math.p8
 -- This code is part of Qiskit.
---
 -- Copyright IBM 2020
-
 -- Custom math table for compatibility with the Pico8
 
 math = {}
@@ -32,9 +44,7 @@ function os.time()
 end
 
 -- MicroQiskit.lua
-
 -- This code is part of Qiskit.
---
 -- Copyright IBM 2020
 
 math.randomseed(os.time())
@@ -295,95 +305,51 @@ function simulate (qc, get, shots)
 
 end
 
+----------------------------------------------------------------------
 -- QPong
+----------------------------------------------------------------------
 
-scored = ""
-blink_timer = 0
 
-function gbvram()
-  -- remap gameboy color pallette
-
-  green_0 = 0xf1 -- darkest green
-  green_1 = 0x93 -- dark green
-  green_2 = 0x23 -- light green
-  green_3 = 0xfb -- lightest green
-
-  poke(0x5f10+0, green_0)
-  poke(0x5f10+1, green_1)
-  poke(0x5f10+2, green_2)
-  poke(0x5f10+3, green_2)
-  poke(0x5f10+4, green_0)
-  poke(0x5f10+5, green_1)
-  poke(0x5f10+6, green_2)
-  poke(0x5f10+7, green_3)
-  poke(0x5f10+8, green_1)
-  poke(0x5f10+9, green_1)
-  poke(0x5f10+10, green_3)
-  poke(0x5f10+11, green_1)
-  poke(0x5f10+12, green_1)
-  poke(0x5f10+13, green_1)
-  poke(0x5f10+14, green_2)
-  poke(0x5f10+15, green_3)
-
+----------------
+-- init
+----------------
+function _init()
+  set_scene("title")
+  init_menu()
+  -- use gameboy palette
+  gb_palette()
 end
 
---menu system
---by pixelcod
-
-function lerp(startv,endv,per)
- return(startv+per*(endv-startv))
-end
-
-function update_cursor()
- if (btnp(2)) menu.sel-=1 cx=menu.x sfx(0)
- if (btnp(3)) menu.sel+=1 cx=menu.x sfx(0)
- if (btnp(4)) cx=menu.x sfx(1)
- if (btnp(5)) sfx(2)
- if (menu.sel>menu.amt) menu.sel=1
- if (menu.sel<=0) menu.sel=menu.amt
-
- cx=lerp(cx,menu.x+5,0.5)
-end
-
-function draw_options()
- for i=1, menu.amt do
-  oset=i*8
-  if i==menu.sel then
-   rectfill(cx,menu.y+oset-1,cx+32,menu.y+oset+5,col1)
-   print(menu.options[i],cx+1,menu.y+oset,col2)
-  else
-   print(menu.options[i],menu.x,menu.y+oset,col1)
+function set_scene(s)
+  if s == "title" then
+    _update60 = update_title
+    _draw = draw_title
+  elseif s == "game" then
+    _update60 = update_game
+    _draw = draw_game
+  elseif s == "game_over" then
+    _update60 = update_game_over
+    _draw = draw_game_over
+  elseif s == "credits" then
+    _update60 = update_credits
+    _draw = draw_credits
   end
- end
 end
 
-function init_menu()
- menu={}
- menu.x=50
- cx=menu.x
- menu.y=70
- menu.options={"start","settings",
-            "credits"}
- menu.amt=0
- for i in all(menu.options) do
-  menu.amt+=1
- end
- menu.sel=1
- sub_mode=0
- menu_timer=0
-end
-
-function update_menu()
+----------------
+-- title
+----------------
+function update_title()
  update_cursor()
  if sub_mode==0 then
   if btnp(4) and
   menu_timer>1 then
    if menu.options[menu.sel]=="start" then
     new_game()
-   elseif menu.options[menu.sel]=="settings" then
+   elseif menu.options[menu.sel]=="colors" then
     init_settings()
    elseif menu.options[menu.sel]=="credits" then
-    scene = "credits"
+    set_scene("credits")
    end
   end
  end
@@ -394,60 +360,250 @@ function update_menu()
  menu_timer+=1
 end
 
-function draw_logo()
-  for i = 0, 10 do
-    for j = 0, 1 do
-        spr(64 + i + 16 * j,
-            32 + 8 * i,
-            30 + 8 * j)
-    end
-  end
+function draw_title()
+  cls()
+  draw_game_logo()
+  draw_options()
+end
+
+function draw_game_logo()
+  sspr(0,32,64,16,32,30)
   print("made by qiskitters with", 4*3, 120, 6)
   print("qiskitters", 4*11, 120, 12)
   print("\135", 4*27, 120, 8)
 end
 
-function draw_menu()
+----------------
+-- game
+----------------
+function draw_game()
   cls()
-  draw_logo()
-  draw_options()
-end
+  --court
+  rect(court.left,court.top,court.right,court.bottom,court.color)
 
-function init_settings()
- menu.sel=1
- menu.options={"palette"}
- menu.amt=0
- for i in all(menu.options) do
-  menu.amt+=1
- end
- sub_mode=1
- menu_timer=0
-end
+  --dashed center line
+  repeat
+      line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
+      dash_line.y += dash_line.length*2
+  until dash_line.y > court.bottom-1
+  dash_line.y = 0 --reset
 
-function update_settings()
- if (btnp(5)) init_menu()
- if btnp(4) and
- menu_timer>1 then
-  if menu.options[menu.sel]=="palette" then
-   gbvram()
+  --circuit composer
+  rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
+  --qubit lines
+  repeat
+      line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
+      qubit_line.y += qubit_line.separation
+  until qubit_line.y > composer.bottom-1
+  qubit_line.y = 90 --reset
+
+  for slot = 1, 8 do
+      for wire = 1, 3 do
+          gnum = gates[wire][slot] - 2
+          if gnum != -1 then
+              spr(gnum,
+                  qubit_line.x + (slot - 1) * qubit_line.separation - 4,
+                  qubit_line.y + (wire - 1) * qubit_line.separation - 4)
+          end
+      end
   end
- end
+
+  --cursor
+  cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
+  cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
+  spr(cursor.sprite,cursor.x,cursor.y)
+
+  for x=0,7 do
+      spr(6, 94, 10 * x + 2)
+      a=x%2
+      b=flr(x/2)%2
+      c=flr(x/4)%2
+      spr(c+4, 97, 10 * x + 2)
+      spr(b+4, 102, 10 * x + 2)
+      spr(a+4, 107, 10 * x + 2)
+      spr(7, 111, 10 * x + 2)
+  end
+
+  --player
+  for y=0,7 do
+      local color
+      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
+      if prob > .99 then
+          color = 7
+      elseif prob > .49 then
+          color = 6
+      elseif prob > .24 then
+          color = 13
+      elseif prob > .11 then
+          color = 5
+      else
+          color = 0
+      end
+
+      rectfill(
+          player.x,
+          10 * y + 1,
+          player.x + player.width,
+          10 * y + player.height,
+          color
+      )
+  end
+
+  --ball
+  rectfill(
+      ball.x,
+      ball.y,
+      ball.x + ball.width,
+      ball.y + ball.width,
+      ball.color
+  )
+
+  --computer
+  rectfill(
+      com.x,
+      com.y,
+      com.x + com.width,
+      com.y + com.height,
+      com.color
+  )
+
+  --scores
+  print(player_points,66,2,player.color)
+  print(com_points,58,2,com.color)
 end
 
-----------------------
+function update_game()
+  if btnp(2) and cursor.row > 0 then
+      cursor.row -= 1
+  end
+  if btnp(3) and cursor.row < 2 then
+      cursor.row += 1
+  end
+  if btnp(0) and cursor.column > 0 then
+      cursor.column -= 1
+  end
+  if btnp(1) and cursor.column < 7  then
+      cursor.column += 1
+  end
+  if btnp(5) then
+    cur_gate = gates[cursor.row+1][cursor.column+1]
+    if cur_gate==2 then
+      gates[cursor.row+1][cursor.column+1]=1
+    else
+      gates[cursor.row+1][cursor.column+1]=2
+    end
+    sim_cir()
+  end
+  if btnp(4) then
+    cur_gate = gates[cursor.row+1][cursor.column+1]
+    if cur_gate==5 then
+      gates[cursor.row+1][cursor.column+1]=1
+    else
+      gates[cursor.row+1][cursor.column+1]=5
+    end
+    sim_cir()
+  end
 
-function _init()
- pals={{7,0},{15,1},{6,5},
-               {10,8},{7,3},{7,2}}
- palnum=5
- scene = "title"
- init_menu()
+  --computer controls
+  com.y += com.speed
+  com.y = max(com.y, 1)
+  com.y = min(com.y, 70)
+
+  local mid_com = com.y + (com.height/2)
+  local r = rnd()
+  if ball.y - mid_com > 0 then
+      if r < .5 then
+          com.speed = min(com.speed + .05, .6)
+      elseif r > .75 then
+          com.speed = max(com.speed - .05, -.6)
+      end
+  else
+      if r < .5 then
+          com.speed = max(com.speed - .05, -.6)
+      elseif r > .75 then
+          com.speed = min(com.speed + .05, .6)
+      end
+  end
+
+  --score
+  win_score = 7
+  if ball.x > court.right then
+      com_points += 1
+      scored = "com"
+      if com_points < win_score then
+          new_round()
+      else
+          set_scene("game_over")
+      end
+  end
+  if ball.x < court.left then
+      player_points += 1
+      scored = "player"
+      if player_points < win_score then
+          new_round()
+      else
+          set_scene("game_over")
+      end
+  end
+  --collide with court
+  if ball.y + ball.width >= court.bottom - 1
+  or ball.y <= court.top+1 then
+      ball.dy = -ball.dy
+      sfx(2)
+  end
+
+  --collide with com
+  if ball.dx < 0
+      and ball.x <= com.x+com.width
+      and ball.x >com.x
+      and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
+  then
+      ball.dy -= ball.speedup*2
+      --flip ball DX and add speed
+      ball.dx = -(ball.dx - ball.speedup)
+      sfx(1)
+  end
+  --TODO: when ball collide on edge--> measure
+  --UNTEST
+  if ball.x > court.edge and counter==0 then
+      counter=30
+      meas_prob()
+      for i=1,8 do
+          if probs[i] == 1 then
+              beg = 10 * (i - 1)
+              player.y = beg
+          end
+      end
+  elseif ball.x < court.edge and counter > 0 then
+    counter-=1
+    if counter==0 then
+      sim_cir()
+    end
+  end
+  ------------------------
+
+  --collide with player
+  if ball.dx > 0
+      and ball.x <= player.x+player.width
+      and ball.x> player.x
+      and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
+  then
+      ball.dy -= ball.speedup*2
+      --flip ball DX and add speed
+      ball.dx = -(ball.dx - ball.speedup)
+      sfx(1)
+  end
+  --ball movement
+  ball.x += ball.dx
+  ball.y += ball.dy
 end
 
 function new_game()
-    scene = "game"
+    set_scene("game")
     player_points = 0
     com_points = 0
+    scored = ""
+    blink_timer = 0
 
     --variables
     counter=0
@@ -543,146 +699,6 @@ function new_game()
     new_round()
 end
 
-function draw_game_over()
-  if scored == "player" then
-    --player win
-    --TODO 192 208
-    print("you demostrated", 20 , 20 , 8)
-    for i = 1,4 do
-        spr(i+200,20+8*i,30)
-    end
-    for i = 1,5 do
-        spr(i+216,63+8*i,30)
-    end
-    spr(236,95,38)
-    spr(237,103,38)
-    --cat
-    sspr(25,97,16,16,0,96,32,32)
-
-    --qiskit
-    spr(199,100,10)
-    spr(200,108,10)
-    spr(215,100,18)
-    spr(216,108,18)
-
-    print("for the first time ",53,46,8)
-    print("in human history!",53,54,8)
-  --com win
-  --TODO
-  else
-    print("classical computers",20,30,8)
-    print("still rule the world!",40,50,8)
-    --cat
-    sspr(1,97,16,16,0,96,32,32)
-
-    --computer
-    spr(197,100,10)
-    spr(198,108,10)
-    spr(213,100,18)
-    spr(214,108,18)
-  end
-
-  --restart
-  if blink_timer < 40 then
-      print("press z to restart", 30, 80, 10)
-  end
-end
-
-function draw_game()
-  --court
-  rect(court.left,court.top,court.right,court.bottom,court.color)
-
-  --dashed center line
-  repeat
-      line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
-      dash_line.y += dash_line.length*2
-  until dash_line.y > court.bottom-1
-  dash_line.y = 0 --reset
-
-  --circuit composer
-  rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
-  --qubit lines
-  repeat
-      line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
-      qubit_line.y += qubit_line.separation
-  until qubit_line.y > composer.bottom-1
-  qubit_line.y = 90 --reset
-
-  for slot = 1, 8 do
-      for wire = 1, 3 do
-          gnum = gates[wire][slot] - 2
-          if gnum != -1 then
-              spr(gnum,
-                  qubit_line.x + (slot - 1) * qubit_line.separation - 4,
-                  qubit_line.y + (wire - 1) * qubit_line.separation - 4)
-          end
-      end
-  end
-
-  --cursor
-  cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
-  cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
-  spr(cursor.sprite,cursor.x,cursor.y)
-
-  for x=0,7 do
-      spr(6, 94, 10 * x + 2)
-      a=x%2
-      b=flr(x/2)%2
-      c=flr(x/4)%2
-      spr(c+4, 97, 10 * x + 2)
-      spr(b+4, 102, 10 * x + 2)
-      spr(a+4, 107, 10 * x + 2)
-      spr(7, 111, 10 * x + 2)
-  end
-
-  --player
-  for y=0,7 do
-      local color
-      local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
-      if prob > .99 then
-          color = 7
-      elseif prob > .49 then
-          color = 6
-      elseif prob > .24 then
-          color = 13
-      elseif prob > .11 then
-          color = 5
-      else
-          color = 0
-      end
-
-      rectfill(
-          player.x,
-          10 * y + 1,
-          player.x + player.width,
-          10 * y + player.height,
-          color
-      )
-  end
-
-  --ball
-  rectfill(
-      ball.x,
-      ball.y,
-      ball.x + ball.width,
-      ball.y + ball.width,
-      ball.color
-  )
-
-  --computer
-  rectfill(
-      com.x,
-      com.y,
-      com.x + com.width,
-      com.y + com.height,
-      com.color
-  )
-
-  --scores
-  print(player_points,66,2,player.color)
-  print(com_points,58,2,com.color)
-end
-
 function new_round()
   if scored == "player" then
       ball={
@@ -709,6 +725,80 @@ function new_round()
   end
 end
 
+----------------
+-- game over
+----------------
+function update_game_over()
+  if btnp(4) then new_game() end
+end
+
+function draw_game_over()
+  cls()
+
+  blink_timer = (blink_timer + 1) % 60
+
+  if scored == "player" then
+    --player win
+    print("you demostrated", 8, 28, 8)
+    -- quantum advantgage
+    sspr(0,80,80,16,24,40)
+    -- cat
+    sspr(16,64,16,16,2,94,32,32)
+
+    draw_qiskit_logo(100,10)
+
+    print("for the first time ",44,58,8)
+    print("in human history!",56,66,8)
+  else
+    --com win
+    print("classical computers",8,28,8)
+    print("still rule the world!",40,50,8)
+    --cat
+    sspr(0,64,16,16,2,94,32,32)
+
+    --computer
+    sspr(32,64,16,16,96,4,32,32)
+  end
+
+  --restart
+  if blink_timer < 40 then
+      print("press z/\142 to restart", 24, 80, 10)
+  end
+end
+
+----------------
+-- credits
+----------------
+function update_credits()
+  if btnp(4) then set_scene("title") end
+end
+
+function draw_credits()
+  cls()
+  print("made during", 4, 8, 9)
+  print("qiskit hackathon taiwan 2020", 4*2, 8*2, 7)
+  print("by", 4, 8*4, 9)
+  authors = {"jian j-lee", "lee yi", "lee yu-chieh", "zuo tso-yen"}
+  coaches = {"huang junye", "leung shek lun"}
+  xoffset = 4*2
+  yoffset = 8*5
+  print("team members", xoffset, yoffset, 12)
+  for i, name in ipairs(authors) do print(name, xoffset+4, yoffset+i*8, 7) end
+
+  print("coaches", xoffset, yoffset+44, 12)
+  for i, name in ipairs(coaches) do print(name, xoffset+4, yoffset+44+i*8, 7) end
+
+  draw_qiskit_logo(90,50)
+end
+
+function draw_qiskit_logo(x,y)
+  sspr(48,64,16,16,x,y)
+  print("qiskit", x-3, y+19, 6)
+end
+
+----------------
+-- quantum circuits
+----------------
 function sim_cir()
     qc = QuantumCircuit()
     qc.set_registers(3,3)
@@ -770,188 +860,115 @@ function meas_prob()
     return idx
 end
 
-function update_game()
-  if btnp(2) and cursor.row > 0 then
-      cursor.row -= 1
-  end
-  if btnp(3) and cursor.row < 2 then
-      cursor.row += 1
-  end
-  if btnp(0) and cursor.column > 0 then
-      cursor.column -= 1
-  end
-  if btnp(1) and cursor.column < 7  then
-      cursor.column += 1
-  end
-  if btnp(5) then
-    cur_gate = gates[cursor.row+1][cursor.column+1]
-    if cur_gate==2 then
-      gates[cursor.row+1][cursor.column+1]=1
-    else
-      gates[cursor.row+1][cursor.column+1]=2
-    end
-    sim_cir()
-  end
-  if btnp(4) then
-    cur_gate = gates[cursor.row+1][cursor.column+1]
-    if cur_gate==5 then
-      gates[cursor.row+1][cursor.column+1]=1
-    else
-      gates[cursor.row+1][cursor.column+1]=5
-    end
-    sim_cir()
-  end
+----------------
+-- menu
+-- Inspired by PixelCode
+-- Source code: https://www.lexaloffle.com/bbs/?tid=27725
+----------------
+function lerp(startv,endv,per)
+ return(startv+per*(endv-startv))
+end
 
-  --computer controls
-  com.y += com.speed
-  com.y = max(com.y, 1)
-  com.y = min(com.y, 70)
+function update_cursor()
+ if (btnp(2)) menu.sel-=1 cx=menu.x sfx(0)
+ if (btnp(3)) menu.sel+=1 cx=menu.x sfx(0)
+ if (btnp(4)) cx=menu.x sfx(1)
+ if (btnp(5)) sfx(2)
+ if (menu.sel>menu.amt) menu.sel=1
+ if (menu.sel<=0) menu.sel=menu.amt
 
-  local mid_com = com.y + (com.height/2)
-  local r = rnd()
-  if ball.y - mid_com > 0 then
-      if r < .5 then
-          com.speed = min(com.speed + .05, .6)
-      elseif r > .75 then
-          com.speed = max(com.speed - .05, -.6)
-      end
+ cx=lerp(cx,menu.x+5,0.5)
+end
+
+function draw_options()
+ for i=1, menu.amt do
+  oset=i*8
+  if i==menu.sel then
+   rectfill(cx,menu.y+oset-1,cx+4*7,menu.y+oset+5,col1)
+   print(menu.options[i],cx+1,menu.y+oset,col2)
   else
-      if r < .5 then
-          com.speed = max(com.speed - .05, -.6)
-      elseif r > .75 then
-          com.speed = min(com.speed + .05, .6)
-      end
+   print(menu.options[i],menu.x,menu.y+oset,col1)
   end
-
-  --score
-  win_score = 7
-  if ball.x > court.right then
-      com_points += 1
-      scored = "com"
-      if com_points < win_score then
-          new_round()
-      else
-          scene = "game_over"
-      end
-  end
-  if ball.x < court.left then
-      player_points += 1
-      scored = "player"
-      if player_points < win_score then
-          new_round()
-      else
-          scene = "game_over"
-      end
-  end
-  --collide with court
-  if ball.y + ball.width >= court.bottom - 1
-  or ball.y <= court.top+1 then
-      ball.dy = -ball.dy
-      sfx(2)
-  end
-
-  --collide with com
-  if ball.dx < 0
-      and ball.x <= com.x+com.width
-      and ball.x >com.x
-      and ((ball.y+ball.width<=com.y+com.height and ball.y+ball.width>=com.y)or(ball.y<=com.y+com.height and ball.y>=com.y))
-  then
-      ball.dy -= ball.speedup*2
-      --flip ball DX and add speed
-      ball.dx = -(ball.dx - ball.speedup)
-      sfx(1)
-  end
-  --TODO: when ball collide on edge--> measure
-  --UNTEST
-  if ball.x > court.edge and counter==0 then
-      counter=30
-      meas_prob()
-      for i=1,8 do
-          if probs[i] == 1 then
-              beg = 10 * (i - 1)
-              player.y = beg
-          end
-      end
-  elseif ball.x < court.edge and counter > 0 then
-    counter-=1
-    if counter==0 then
-      sim_cir()
-    end
-  end
-  ------------------------
-
-  --collide with player
-  if ball.dx > 0
-      and ball.x <= player.x+player.width
-      and ball.x> player.x
-      and ((ball.y+ball.width<=player.y+player.height and ball.y+ball.width>=player.y)or(ball.y<=player.y+player.height and ball.y>=player.y))
-  then
-      ball.dy -= ball.speedup*2
-      --flip ball DX and add speed
-      ball.dx = -(ball.dx - ball.speedup)
-      sfx(1)
-  end
-  --ball movement
-  ball.x += ball.dx
-  ball.y += ball.dy
+ end
 end
 
-function update_game_over()
-  if btnp(4) then new_game() end
+function init_menu()
+ menu={}
+ menu.x=50
+ cx=menu.x
+ menu.y=70
+ menu.options={"start","colors",
+            "credits"}
+ menu.amt=0
+ for i in all(menu.options) do
+  menu.amt+=1
+ end
+ menu.sel=1
+ sub_mode=0
+ menu_timer=0
 end
 
-function update_credits()
-  if btnp(4) then scene = "title" end
+function init_settings()
+ menu.sel=1
+ menu.options={"gameboy", "pico-8"}
+ menu.amt=0
+ for i in all(menu.options) do
+  menu.amt+=1
+ end
+ sub_mode=1
+ menu_timer=0
 end
 
-function draw_credits()
-  print("made during", 4, 8, 9)
-  print("qiskit hackathon taiwan 2020", 4*2, 8*2, 7)
-  print("by", 4, 8*4, 9)
-  authors = {"jian j-lee", "lee yi", "lee yu-chieh", "zuo tso-yen"}
-  coaches = {"huang junye", "leung shek lun"}
-  xoffset = 4*2
-  yoffset = 8*5
-  print("team members", xoffset, yoffset, 12)
-  for i, name in ipairs(authors) do print(name, xoffset+4, yoffset+i*8, 7) end
-
-  print("coaches", xoffset, yoffset+44, 12)
-  for i, name in ipairs(coaches) do print(name, xoffset+4, yoffset+44+i*8, 7) end
-end
-
-function _update60()
-  if scene == "title" then
-    update_menu()
-  elseif scene == "game" then
-    update_game()
-  elseif scene == "game_over" then
-    update_game_over()
-  elseif scene == "credits" then
-    update_credits()
+function update_settings()
+ if (btnp(5)) init_menu()
+ if btnp(4) and
+ menu_timer>1 then
+  if menu.options[menu.sel]=="gameboy" then
+    gb_palette()
+  elseif menu.options[menu.sel]=="pico-8" then
+    pico8_palette()
   end
-  blink_timer = (blink_timer + 1) % 60
+ end
 end
 
-function _draw()
-    cls()
-    --gbvram() -- gameboy color pallette
+----------------
+-- color palette
+-- Inspired by @TheUnproPro
+-- Source code: https://twitter.com/TheUnproPro/status/1168665614896062468
+----------------
+function gb_palette()
+  -- gameboy color palette
 
-    -- test color pallette swapping
-    --[[
-    for i=0,15 do
-      print(i, 0, 5*i, i)
-    end
-    ]]
+  green_0 = 0xf1 -- darkest green
+  green_1 = 0x93 -- dark green
+  green_2 = 0x23 -- light green
+  green_3 = 0xfb -- lightest green
 
-    if scene == "title" then
-      draw_menu()
-    elseif scene == "game" then
-      draw_game()
-    elseif scene == "game_over" then
-      draw_game_over()
-    elseif scene == "credits" then
-      draw_credits()
-    end
+  poke(0x5f10+0, green_0)
+  poke(0x5f10+1, green_1)
+  poke(0x5f10+2, green_2)
+  poke(0x5f10+3, green_2)
+  poke(0x5f10+4, green_0)
+  poke(0x5f10+5, green_1)
+  poke(0x5f10+6, green_2)
+  poke(0x5f10+7, green_3)
+  poke(0x5f10+8, green_1)
+  poke(0x5f10+9, green_1)
+  poke(0x5f10+10, green_3)
+  poke(0x5f10+11, green_1)
+  poke(0x5f10+12, green_1)
+  poke(0x5f10+13, green_1)
+  poke(0x5f10+14, green_2)
+  poke(0x5f10+15, green_3)
+
+end
+
+function pico8_palette()
+  -- pico-8 original palette
+
+  for i = 0, 15 do
+    poke(0x5f10+i, i)
+  end
 end
 
 __gfx__
@@ -1019,183 +1036,29 @@ c0000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-cccccccc0cccccccccccc000ccccc000000000ccccc00000111000000000111088888888888880333000000333000000cccc0cccccc00cc0000000cc00000000
-00000000000000000000000000000000000000000000000011110000000011108888888888888033300000033300000000000000000000000000000000000000
-cccccccc0ccccccccccccc00cccccc0000000cccccc00000111110000000111088888888888880333000000333000000cccc0ccc0ccc0ccc00000ccc00000000
-00000000000000000000000000000000000000000000000011111100000011100000088800000033300000033300000000000000000000000000000000000000
-00cccc00000ccc00000ccc0000ccccc00000ccccc00000001111111000001110000008880000003330000003330000000cc000c00ccc00ccc000ccc000000000
-00000000000000000000000000000000000000000000000011111111000011100000088800000033300000033300000000000000000000000000000000000000
-00cccc00000ccccccccc000000cccccc000cccccc00000001110111110001110000008880000003330000003330000000cc000ccccc000cccc0cccc000000000
-00000000000000000000000000000000000000000000000011100111110011100000088800000033300000033300000000000000000000000000000000000000
-00cccc00000ccccccccc000000ccc0ccc0ccc0ccc00000001110001111101110000008880000003330000003330000000cc000c00cc000cc0c0c0cc000000000
-00000000000000000000000000000000000000000000000011100001111111100000088800000033300000033300000000000000000000000000000000000000
-00cccc00000ccc00000ccc0000ccc00ccccc00ccc00000001110000011111110000008880000003330000003330000000cc000c00ccc00cc0ccc0cc000000000
-00000000000000000000000000000000000000000000000011100000011111100000088800000033300000033300000000000000000000000000000000000000
-cccccccc0ccccccccccccc00ccccc000ccc000ccccc00000111000000011111000000888000000333300003333000000cccc0ccccccc0ccc00c00ccc00000000
-00000000000000000000000000000000000000000000000011100000000111100000088800000033333333333300000000000000000000000000000000000000
-cccccccc0cccccccccccc000ccccc0000c0000ccccc00000111000000000111000000888000000033333333330000000cccc0cccccc00ccc00000ccc00000000
-00000000000000000000000000000000000000000000000011100000000011100000088800000003333333333000000000000000000000000000000000000000
-0eeeeee00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd88888888330003300000000
-e000000e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd88888888330003300000000
-e0e00e0e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd00088000330003300000000
-e00ee00e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd00088000330003300000000
-e00ee00e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ddd0000dd00088000330003300000000
-e0e00e0e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dddd000dd00088000330003300000000
-e000000e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ddddd00dd00088000330003300000000
-0eeeeee00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dddddd0dd00088000330003300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ddddddddd00088000330003300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd0dddddd00088000330003300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00ddddd00088000330003300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd000dddd00088000330003300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd0000ddd00088000330003300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd00088000333033300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd00088000333333300000000
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd00088000033333000000000
-00000000000b00000000000000000000000000000000000000000000000770777707700000000000000000000000000000000000000000000000000000000000
-0000000b00000b0b000000000000000000000000000000000000000000777700007777000aaaaaa0000000000000000000000000000000000000000000000000
-00000000000b000b000000000000000000000707000000000000000007777777777777700a0000a0000000000000000000000000000000000000000000000000
-00000000b0b00b00000000000000007770000777011111111110000077099000000000770a0000a0000000000000000000000000000000000000000000000000
-000000000b0b00b0000000000001000077777070017777777710000070799777777777070a0000a0000000000000a00000000000000000000000000000000000
-0007007000000000000000000000100000777700017777777710000007777977777777700a00a0a0a0a0aaa0aaa0aa0a0a0aaaaa000000000000000000000000
-000777700b00bb0b000000000000010000700700017977779710000070777797777777070a000aa0a0a0a0a0a0a0a00a0a0a0a0a000000000000000000000000
-0007777000000000000000000000010007007000017979979710000077000009000000770aaaaaaaaaaaaaaaa0aaaaaaaaaa0a0a000000000000000000000000
-00077770333333330000000000900001000000000179999997100000777777779777777700000000000000000000000000000000000000000000000000000000
-00077770333333330000000000900010001011000111111111100000770000000900007700aa0000000000000000000000000000000000000000000000000000
-0007777033338333000000000090000001000000011111111110000070777777779777070a00a000a00000000000000000000000000000000000000000000000
-000777703338a8330000000000999999000000000dddddddddd0000007777777777997700a00a000a00000000000000000000000000000000000000000000000
-770777703388a8830000000000999999000000000d06060606d0000070777777777997070a00a000a0000000000000a000000000000000000000000000000000
-07077770388888880000000000999999000000000d60606060d0d60007000000000000700aaaa0aaa0a0a0aaa0aaa0aa0aaa0aaa0aaa00000000000000000000
-077777708888a8880000000000999999000000000d06060606d0660000777777777777000a00a0a0a0a0a0a0a0a0a0a00a0a0a0a0a0a00000000000000000000
-00077770333333330000000000999999000000000dddd77dddd0660000077700007770000a00a0aaa00a00aaaaa0aaaaaaaaaa0aaaaa00000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0a0000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000aaa0aaa00000000000000000000
-__label__
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000110000000000000000000000000011100000000011000000000000000000000000000011000000000000000000000000000000000000
-00000000000000000000110000000000000000000000000001110000000011000000000000000000000000000001100000000000000000000000000000000000
-00000000000000000000110000000000999999990000000000110000000011000000000000000000000000000001100000000000000000000000000000000000
-00000000000000000000110000000009999999999000000000011000000011000999999999990000000000000000110000000000000000000000000000000000
-00000000000000000000110000000999000000099900000000011000000011000999999999999900000000000000111000000000000000000000000000000000
-00000000000000000000110000009999000000009990000000001100000011000999000000099990000000000000011000000000000000000000000000000000
-00000000000000000000110000099900000000000999000000001100000011000999000000000990000000000000001100000000000000000000000000000000
-00000000000000000000110000099000000000000099900000001110000011000999000000000099000000000000001100000000000000000000000000000000
-00000000000000000000110000999000000000000009900000000110000011000999000000000099000000000000000110000000000000000000000000000000
-00000000000000000000110000999000000000000009990000000110000011000999000000000099000000000000000111000000000000000000000000000000
-00000000000000000000110000990000000000000000990000000011000011000999000000000099000000000000000011000000000000000000000000000000
-00000000000000000000110009990000000000000000990000000011000011000999000000000099000000000000000011100000000000000000000000000000
-00000000000000000000110009900000000000000000990000000001000011000999000000000990000000000000000001100000000000000000000000000000
-00000000000000000000110009900000000000000000990000000001100011000999000000009990000000000000000000110000000000000000000000000000
-00000000000000000000110009900000000000000000099000000000110011000999999999999900000000000000000000110000000000000000000000000000
-00000000000000000000110009900000000000000000099000000000110011000999999999990000000000000000000000011000000000000000000000000000
-00000000000000000000110009900000000000000000099000000000110011000990000000000000000000000000000000011000000000000000000000000000
-00000000000000000000110009990000000000099000099000000001100011000990000000000000000000000000000000110000000000000000000000000000
-00000000000000000000110009990000000000099000990000000001000011000990000000000000000000000000000000110000000000000000000000000000
-00000000000000000000110000990000000000099900990000000011000011000990000000000000000000000000000001100000000000000000000000000000
-00000000000000000000110000990000000000009990990000000011000011000990000999000909900009900000000001100000000000000000000000000000
-00000000000000000000110000099000000000000990900000000110000011000990009909900990090090090000000001000000000000000000000000000000
-00000000000000000000110000099000000000000099900000001110000011000990009000900900090090090000000011000000000000000000000000000000
-00000000000000000000110000099900000000000999000000001100000011000990009909900900090009990000000011000000000000000000000000000000
-00000000000000000000110000009990000000099999900000011000000011000990000999000900090000099000000010000000000000000000000000000000
-00000000000000000000110000000099990009999909990000011000000011000990000000000000000000990000000110000000000000000000000000000000
-00000000000000000000110000000009999999990000999000110000000011000000000000000000000009090000000110000000000000000000000000000000
-00000000000000000000110000000000009990000000099000110000000011000000000000000000000090090000001100000000000000000000000000000000
-00000000000000000000110000000000000000000000000001100000000011000000000000000000000090900000011000000000000000000000000000000000
-00000000000000000000110000000000000000000000000001100000000011000000000000000000000009000000011000000000000000000000000000000000
-00000000000000000000110000000000000000000000000011000000000011000000000000000000000000000000110000000000000000000000000000000000
-00000000000000000000110000000000000000000000000011000000000011000000000000000000000000000000110000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000aaa0aaa0aaa00aa00aa00000aaa000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000a0a0a0a0a000a000a000000000a000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000aaa0aa00aa00aaa0aaa000000a0000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000a000a0a0a00000a000a00000a00000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000a000a0a0aaa0aa00aa000000aaa000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000000000000000000000000000000000000000000000000000000000000cccc0cccccc00cc0000000cc0000000000000000dd00000dd888888883300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd888888883300033
-0000000000000000000000000000000000000000000000000000000000000000cccc0ccc0ccc0ccc00000ccc0000000000000000dd00000dd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dd00000dd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000cc000c00ccc00ccc000ccc00000000000000000ddd0000dd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dddd000dd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000cc000ccccc000cccc0cccc00000000000000000ddddd00dd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000dddddd0dd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000cc000c00cc000cc0c0c0cc000000eeeeee00000ddddddddd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e000000e0000dd0dddddd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000cc000c00ccc00cc0ccc0cc00000e0e00e0e0000dd00ddddd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e00ee00e0000dd000dddd000880003300033
-0000000000000000000000000000000000000000000000000000000000000000cccc0ccccccc0ccc00c00ccc0000e00ee00e0000dd0000ddd000880003300033
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e0e00e0e0000dd00000dd000880003330333
-0000000000000000000000000000000000000000000000000000000000000000cccc0cccccc00ccc00000ccc0000e000000e0000dd00000dd000880003333333
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000eeeeee00000dd00000dd000880000333330
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-
+00000000000b00000000000000000000000000000000000000077077770770000000000000000000000000000000000000000000000000000000000000000000
+0000000b00000b0b0000000000000000000000000000000000777700007777000000000000000000000000000000000000000000000000000000000000000000
+00000000000b000b0000000000070700000000000000000007777777777777700000000000000000000000000000000000000000000000000000000000000000
+00000000b0b00b000000777000077700011111111110000077099000000000770000000000000000000000000000000000000000000000000000000000000000
+000000000b0b00b00100007777707000017777777710000070799777777777070000000000000000000000000000000000000000000000000000000000000000
+00070070000000000010000077770000017777777710000007777977777777700000000000000000000000000000000000000000000000000000000000000000
+000777700b00bb0b0001000070070000017977779710000070777797777777070000000000000000000000000000000000000000000000000000000000000000
+00077770000000000001000700700000017979979710000077000009000000770000000000000000000000000000000000000000000000000000000000000000
+00077770333333339000010000000000017999999710000077777777977777770000000000000000000000000000000000000000000000000000000000000000
+00077770333333339000100010110000011111111110000077000000090000770000000000000000000000000000000000000000000000000000000000000000
+00077770333383339000000100000000011111111110000070777777779777070000000000000000000000000000000000000000000000000000000000000000
+000777703338a83399999900000000000dddddddddd0000007777777777997700000000000000000000000000000000000000000000000000000000000000000
+770777703388a88399999900000000000d06060606d0000070777777777997070000000000000000000000000000000000000000000000000000000000000000
+070777703888888899999900000000000d60606060d0d60007000000000000700000000000000000000000000000000000000000000000000000000000000000
+077777708888a88899999900000000000d06060606d0660000777777777777000000000000000000000000000000000000000000000000000000000000000000
+000777703333333399999900000000000dddd77dddd0660000077700007770000000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0aaaaaa00000000000000000000000000000000000aa000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0a0000a0000000000000000000000000000000000a00a000a0000000000000000000000000000000000000000000000000000000000000000000000000000000
+0a0000a0000000000000000000000000000000000a00a000a0000000000000000000000000000000000000000000000000000000000000000000000000000000
+0a0000a0000000000000a00000000000000000000a00a000a0000000000000a00000000000000000000000000000000000000000000000000000000000000000
+0a00a0a0a0a0aaa0aaa0aa0a0a0aaaaa000000000aaaa0aaa0a0a0aaa0aaa0aa0aaa0aaa0aaa0000000000000000000000000000000000000000000000000000
+0a000aa0a0a0a0a0a0a0a00a0a0a0a0a000000000a00a0a0a0a0a0a0a0a0a0a00a0a0a0a0a0a0000000000000000000000000000000000000000000000000000
+0aaaaaaaaaaaaaaaa0aaaaaaaaaa0a0a000000000a00a0aaa00a00aaaaa0aaaaaaaaaa0aaaaa0000000000000000000000000000000000000000000000000000
+00000000000000000000000000000000000000000000000000000000000000000000000a0a000000000000000000000000000000000000000000000000000000
+000000000000000000000000000000000000000000000000000000000000000000000aaa0aaa0000000000000000000000000000000000000000000000000000
