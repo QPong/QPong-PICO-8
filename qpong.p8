@@ -381,7 +381,7 @@ function init_menu()
  menu_timer=0
 end
 
-function update_menu()
+function update_title()
  update_cursor()
  if sub_mode==0 then
   if btnp(4) and
@@ -391,7 +391,7 @@ function update_menu()
    elseif menu.options[menu.sel]=="colors" then
     init_settings()
    elseif menu.options[menu.sel]=="credits" then
-    scene = "credits"
+    set_scene("credits")
    end
   end
  end
@@ -438,20 +438,18 @@ function update_settings()
  end
 end
 
-----------------------
-
 function _init()
  pals={{7,0},{15,1},{6,5},
                {10,8},{7,3},{7,2}}
  palnum=5
- scene = "title"
+ set_scene("title")
  init_menu()
  -- use gameboy palette
  gb_palette()
 end
 
 function new_game()
-    scene = "game"
+    set_scene("game")
     player_points = 0
     com_points = 0
 
@@ -550,6 +548,10 @@ function new_game()
 end
 
 function draw_game_over()
+  cls()
+
+  blink_timer = (blink_timer + 1) % 60
+
   if scored == "player" then
     --player win
     print("you demostrated", 8, 28, 8)
@@ -585,6 +587,7 @@ function draw_qiskit_logo(x,y)
 end
 
 function draw_game()
+  cls()
   --court
   rect(court.left,court.top,court.right,court.bottom,court.color)
 
@@ -827,7 +830,7 @@ function update_game()
       if com_points < win_score then
           new_round()
       else
-          scene = "game_over"
+          set_scene("game_over")
       end
   end
   if ball.x < court.left then
@@ -836,7 +839,7 @@ function update_game()
       if player_points < win_score then
           new_round()
       else
-          scene = "game_over"
+          set_scene("game_over")
       end
   end
   --collide with court
@@ -897,10 +900,11 @@ function update_game_over()
 end
 
 function update_credits()
-  if btnp(4) then scene = "title" end
+  if btnp(4) then set_scene("title") end
 end
 
 function draw_credits()
+  cls()
   print("made during", 4, 8, 9)
   print("qiskit hackathon taiwan 2020", 4*2, 8*2, 7)
   print("by", 4, 8*4, 9)
@@ -917,39 +921,20 @@ function draw_credits()
   draw_qiskit_logo(90,50)
 end
 
-function _update60()
-  if scene == "title" then
-    update_menu()
-  elseif scene == "game" then
-    update_game()
-  elseif scene == "game_over" then
-    update_game_over()
-  elseif scene == "credits" then
-    update_credits()
+function set_scene(s)
+  if s == "title" then
+    _update60 = update_title
+    _draw = draw_title
+  elseif s == "game" then
+    _update60 = update_game
+    _draw = draw_game
+  elseif s == "game_over" then
+    _update60 = update_game_over
+    _draw = draw_game_over
+  elseif s == "credits" then
+    _update60 = update_credits
+    _draw = draw_credits
   end
-  blink_timer = (blink_timer + 1) % 60
-end
-
-function _draw()
-    cls()
-    --gb_palette() -- gameboy color pallette
-
-    -- test color pallette swapping
-    --[[
-    for i=0,15 do
-      print(i, 0, 5*i, i)
-    end
-    ]]
-
-    if scene == "title" then
-      draw_title()
-    elseif scene == "game" then
-      draw_game()
-    elseif scene == "game_over" then
-      draw_game_over()
-    elseif scene == "credits" then
-      draw_credits()
-    end
 end
 
 __gfx__
