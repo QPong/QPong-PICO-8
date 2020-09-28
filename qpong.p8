@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 29
 __lua__
 -- qpong
--- by qiskiters
+-- by qiskitters
 
 ----------------------------------------------------------------------
 -- QPong PICO-8 version
