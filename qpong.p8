@@ -308,8 +308,7 @@ end
 ----------------------------------------------------------------------
 -- QPong
 ----------------------------------------------------------------------
-scored = ""
-blink_timer = 0
+
 
 ----------------
 -- init
@@ -606,6 +605,8 @@ function new_game()
     set_scene("game")
     player_points = 0
     com_points = 0
+    scored = ""
+    blink_timer = 0
 
     --variables
     counter=0
@@ -864,7 +865,7 @@ end
 
 ----------------
 -- menu
--- by PixelCode
+-- Inspired by PixelCode
 -- Source code: https://www.lexaloffle.com/bbs/?tid=27725
 ----------------
 function lerp(startv,endv,per)
