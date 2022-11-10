@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 29
+version 38
 __lua__
 -- qpong
 -- by qiskitters
@@ -18,301 +18,103 @@ __lua__
 -- Coach: James Weaver
 ----------------------------------------------------------------------
 
--- math.p8
--- This code is part of Qiskit.
--- Copyright IBM 2020
--- Custom math table for compatibility with the Pico8
-
-math = {}
-math.pi = 3.14159
-math.max = max
-math.sqrt = sqrt
-math.floor = flr
-function math.random()
-  return rnd(1)
-end
-function math.cos(theta)
-  return cos(theta/(2*math.pi))
-end
-function math.sin(theta)
-  return -sin(theta/(2*math.pi))
-end
-function math.randomseed(time)
-end
-os = {}
-function os.time()
-end
-
--- MicroQiskit.lua
--- This code is part of Qiskit.
--- Copyright IBM 2020
-
-math.randomseed(os.time())
-
-function QuantumCircuit ()
-
-  local qc = {}
-
-  local function set_registers (n,m)
-    qc.num_qubits = n
-    qc.num_clbits = m or 0
-  end
-  qc.set_registers = set_registers
-
-  qc.data = {}
-
-  function qc.initialize (ket)
-    ket_copy = {}
-    for j, amp in pairs(ket) do
-      if type(amp)=="number" then
-        ket_copy[j] = {amp, 0}
-      else
-        ket_copy[j] = {amp[0], amp[1]}
-      end
-    end
-    qc.data = {{'init',ket_copy}}
-  end
-
-  function qc.add_circuit (qc2)
-    qc.num_qubits = math.max(qc.num_qubits,qc2.num_qubits)
-    qc.num_clbits = math.max(qc.num_clbits,qc2.num_clbits)
-    for g, gate in pairs(qc2.data) do
-      qc.data[#qc.data+1] = ( gate )
-    end
-  end
-
-  function qc.x (q)
-    qc.data[#qc.data+1] = ( {'x',q} )
-  end
-
-  function qc.rx (theta,q)
-    qc.data[#qc.data+1] = ( {'rx',theta,q} )
-  end
-
-  function qc.h (q)
-    qc.data[#qc.data+1] = ( {'h',q} )
-  end
-
-  function qc.cx (s,t)
-    qc.data[#qc.data+1] = ( {'cx',s,t} )
-  end
-
-  function qc.measure (q,b)
-    qc.data[#qc.data+1] = ( {'m',q,b} )
-  end
-
-  function qc.rz (theta,q)
-    qc.h(q)
-    qc.rx(theta,q)
-    qc.h(q)
-  end
-
-  function qc.ry (theta,q)
-    qc.rx(math.pi/2,q)
-    qc.rz(theta,q)
-    qc.rx(-math.pi/2,q)
-  end
-
-  function qc.z (q)
-    qc.rz(math.pi,q)
-  end
-
-  function qc.y (q)
-    qc.z(q)
-    qc.x(q)
-  end
-
-  return qc
-
-end
-
-function simulate (qc, get, shots)
-
-  if not shots then
-    shots = 1024
-  end
-
-  function as_bits (num,bits)
-    -- returns num converted to a bitstring of length bits
-    -- adapted from https://stackoverflow.com/a/9080080/1225661
-    local bitstring = {}
-    for index = bits, 1, -1 do
-        b = num - math.floor(num/2)*2
-        num = math.floor((num - b) / 2)
-        bitstring[index] = b
-    end
-    return bitstring
-  end
-
-  function get_out (j)
-    raw_out = as_bits(j-1,qc.num_qubits)
-    out = ""
-    for b=0,qc.num_clbits-1 do
-      if outputnum_clbitsap[b] then
-        out = raw_out[qc.num_qubits-outputnum_clbitsap[b]]..out
-      end
-    end
-    return out
-  end
-
-
-  ket = {}
-  for j=1,2^qc.num_qubits do
-    ket[j] = {0,0}
-  end
-  ket[1] = {1,0}
-
-  outputnum_clbitsap = {}
-
-  for g, gate in pairs(qc.data) do
-
-    if gate[1]=='init' then
-
-      for j, amp in pairs(gate[2]) do
-          ket[j] = {amp[1], amp[2]}
-      end
-
-    elseif gate[1]=='m' then
-
-      outputnum_clbitsap[gate[3]] = gate[2]
-
-    elseif gate[1]=="x" or gate[1]=="rx" or gate[1]=="h" then
-
-      j = gate[#gate]
-
-      for i0=0,2^j-1 do
-        for i1=0,2^(qc.num_qubits-j-1)-1 do
-          b1=i0+2^(j+1)*i1 + 1
-          b2=b1+2^j
-
-          e = {{ket[b1][1],ket[b1][2]},{ket[b2][1],ket[b2][2]}}
-
-          if gate[1]=="x" then
-            ket[b1] = e[2]
-            ket[b2] = e[1]
-          elseif gate[1]=="rx" then
-            theta = gate[2]
-            ket[b1][1] = e[1][1]*math.cos(theta/2)+e[2][2]*math.sin(theta/2)
-            ket[b1][2] = e[1][2]*math.cos(theta/2)-e[2][1]*math.sin(theta/2)
-            ket[b2][1] = e[2][1]*math.cos(theta/2)+e[1][2]*math.sin(theta/2)
-            ket[b2][2] = e[2][2]*math.cos(theta/2)-e[1][1]*math.sin(theta/2)
-          elseif gate[1]=="h" then
-            for k=1,2 do
-              ket[b1][k] = (e[1][k] + e[2][k])/math.sqrt(2)
-              ket[b2][k] = (e[1][k] - e[2][k])/math.sqrt(2)
-            end
-          end
-
-        end
-      end
-
-    elseif gate[1]=="cx" then
-
-      s = gate[2]
-      t = gate[3]
-
-      if s>t then
-        h = s
-        l = t
-      else
-        h = t
-        l = s
-      end
-
-      for i0=0,2^l-1 do
-        for i1=0,2^(h-l-1)-1 do
-          for i2=0,2^(qc.num_qubits-h-1)-1 do
-            b1 = i0 + 2^(l+1)*i1 + 2^(h+1)*i2 + 2^s + 1
-            b2 = b1 + 2^t
-            e = {{ket[b1][1],ket[b1][2]},{ket[b2][1],ket[b2][2]}}
-            ket[b1] = e[2]
-            ket[b2] = e[1]
-          end
-        end
-      end
-
-    end
-
-  end
-
-  if get=="statevector" then
-    return ket
-  else
-
-    probs = {}
-    for j,amp in pairs(ket) do
-      probs[j] = amp[1]^2 + amp[2]^2
-    end
-
-    if get=="expected_counts" then
-
-      c = {}
-      for j,p in pairs(probs) do
-        out = get_out(j)
-        if c[out] then
-          c[out] = c[out] + probs[j]*shots
-        else
-          if out then -- in case of pico8 weirdness
-            c[out] = probs[j]*shots
-          end
-        end
-      end
-      return c
-
-    else
-
-      m = {}
-      for s=1,shots do
-        cumu = 0
-        un = true
-        r = math.random()
-        for j,p in pairs(probs) do
-          cumu = cumu + p
-          if r<cumu and un then
-            m[s] = get_out(j)
-            un = false
-          end
-        end
-      end
-
-      if get=="memory" then
-        return m
-
-      elseif get=="counts" then
-        c = {}
-        for s=1,shots do
-          if c[m[s]] then
-            c[m[s]] = c[m[s]] + 1
-          else
-            if m[s] then -- in case of pico8 weirdness
-              c[m[s]] = 1
-            else
-              if c["error"] then
-                c["error"] = c["error"]+1
-              else
-                c["error"] = 1
-              end
-            end
-          end
-        end
-        return c
-
-      end
-
-    end
-
-  end
-
-end
+#include math.lua
+#include microqiskit.lua
 
 ----------------------------------------------------------------------
--- QPong
+-- Lookup
 ----------------------------------------------------------------------
 
+-- lookup table with the gpio
+--  addresses, used for reading
+--  and setting values that we
+--  need to pass back and forth
+lookup = {}
+lookup["player_id"]   = 0x5f80
+lookup["room_id"]     = 0x5f81
+lookup["score_1"]     = 0x5f82
+lookup["player_1_y"]  = 0x5f83
+lookup["player_1_prob_0"]  = 0x5f84
+lookup["player_1_prob_1"]  = 0x5f85
+lookup["player_1_prob_2"]  = 0x5f86
+lookup["player_1_prob_3"]  = 0x5f87
+lookup["player_1_prob_4"]  = 0x5f88
+lookup["player_1_prob_5"]  = 0x5f89
+lookup["player_1_prob_6"]  = 0x5f90
+lookup["player_1_prob_7"]  = 0x5f91
+lookup["score_2"]     = 0x5f92
+lookup["player_2_y"]  = 0x5f93
+lookup["player_2_prob_0"]  = 0x5f94
+lookup["player_2_prob_1"]  = 0x5f95
+lookup["player_2_prob_2"]  = 0x5f96
+lookup["player_2_prob_3"]  = 0x5f97
+lookup["player_2_prob_4"]  = 0x5f98
+lookup["player_2_prob_5"]  = 0x5f99
+lookup["player_2_prob_6"]  = 0x5f9a
+lookup["player_2_prob_7"]  = 0x5f9b
+lookup["ball_x_pos"]  = 0x5f9c
+lookup["ball_x_spd"]  = 0x5f9d
+lookup["ball_y_pos"]  = 0x5f9e
+lookup["ball_y_spd"]  = 0x5f9f
+
+-- nset, takes in a lookup key
+--  and a value to write to
+--  that address
+function nset(key, value)
+  poke(lookup[key], value)
+end
+
+-- nget, takes in a lookup key
+--  and returns the value at
+--  that address
+function nget(key)
+  return peek(lookup[key])
+end
+
+-- ninc, takes in a lookup key
+--  and increments a value,
+--  equivalent to +=
+function ninc(key, value)
+ nset(key, nget(key) + value)
+end
+
+function player_select_update()
+  if (btn(❎)) then
+    player_id = 1
+  end
+
+  if (btn(🅾️)) then
+    player_id = 2
+  end
+
+  --- if (btnp(⬆️)) room_id = (room_id+1)%256
+  --- if (btnp(⬇️)) room_id = (room_id-1)%256
+
+  if (player_id != 0) then
+    nset("player_id", player_id)
+    --- nset("room_id", room_id)
+    set_scene("game")
+  end
+end
+
+function player_select_draw()
+  print("❎ - player 1", 5, 10, 12)
+  print("🅾️ - player 2", 70, 10, 8)
+  cursor(37, 2, 3)
+  print("⬆️ room:"..room_id.." ⬇️")
+end
 
 ----------------
 -- init
 ----------------
+
+--- globals
+win_score = 7
+player_points = 0
+com_points = 0
+scored = ""
+blink_timer = 0
+
 function _init()
   set_scene("title")
   init_menu()
@@ -320,6 +122,9 @@ function _init()
   gb_palette()
 end
 
+----------------
+-- set scene
+----------------
 function set_scene(s)
   if s == "title" then
     _update60 = update_title
@@ -340,26 +145,34 @@ end
 -- title
 ----------------
 function update_title()
- update_cursor()
- if sub_mode==0 then
-  if btnp(4) and
-  menu_timer>1 then
-   if menu.options[menu.sel]=="start" then
-    new_game()
-   elseif menu.options[menu.sel]=="colors" then
-    init_settings()
-   elseif menu.options[menu.sel]=="credits" then
-    set_scene("credits")
-   end
+  update_cursor()
+
+  if sub_mode == 0 then
+    if btnp(4) and
+      menu_timer > 1 then
+
+      if menu.options[menu.sel] == "start" then
+       new_game()
+      elseif menu.options[menu.sel] == "colors" then
+       init_settings()
+      elseif menu.options[menu.sel] == "credits" then
+       set_scene("credits")
+      end
+    end
   end
+
+ if (sub_mode == 1) then
+  update_settings()
  end
 
- if (sub_mode==1) update_settings()
- col1=7
- col2=0
- menu_timer+=1
+ col1 = 7
+ col2 = 0
+ menu_timer += 1
 end
 
+----------------
+-- draw title
+----------------
 function draw_title()
   cls()
   draw_game_logo()
@@ -367,7 +180,7 @@ function draw_title()
 end
 
 function draw_game_logo()
-  sspr(0,32,64,16,32,30)
+  sspr(0, 32, 64, 16, 32, 30)
   print("made by qiskitters with", 4*3, 120, 6)
   print("qiskitters", 4*11, 120, 12)
   print("\135", 4*27, 120, 8)
@@ -378,54 +191,58 @@ end
 ----------------
 function draw_game()
   cls()
+
   --court
-  rect(court.left,court.top,court.right,court.bottom,court.color)
+  rect(court.left, court.top, court.right, court.bottom, court.color)
 
   --dashed center line
   repeat
-      line(dash_line.x,dash_line.y,dash_line.x,dash_line.y+dash_line.length,dash_line.color)
-      dash_line.y += dash_line.length*2
+      line(dash_line.x, dash_line.y, dash_line.x, dash_line.y + dash_line.length, dash_line.color)
+      dash_line.y += dash_line.length * 2
   until dash_line.y > court.bottom-1
   dash_line.y = 0 --reset
 
   --circuit composer
-  rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
+  rectfill(composer.left, composer.top, composer.right, composer.bottom, composer.color)
+
   --qubit lines
   repeat
-      line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
-      qubit_line.y += qubit_line.separation
-  until qubit_line.y > composer.bottom-1
-  qubit_line.y = 90 --reset
+    line(qubit_line.x, qubit_line.y, qubit_line.x + qubit_line.length, qubit_line.y, qubit_line.color)
+    qubit_line.y += qubit_line.separation
+  until qubit_line.y > composer.bottom - 1
+  qubit_line.y = 90 -- reset
 
   for slot = 1, 8 do
-      for wire = 1, 3 do
-          gnum = gates[wire][slot] - 2
-          if gnum != -1 then
-              spr(gnum,
-                  qubit_line.x + (slot - 1) * qubit_line.separation - 4,
-                  qubit_line.y + (wire - 1) * qubit_line.separation - 4)
-          end
-      end
+    for wire = 1, 3 do
+        gnum = gates[wire][slot] - 2
+        if gnum != -1 then
+          spr(
+            gnum,
+            qubit_line.x + (slot - 1) * qubit_line.separation - 4,
+            qubit_line.y + (wire - 1) * qubit_line.separation - 4
+          )
+        end
+    end
   end
 
   --cursor
-  cursor.x=qubit_line.x+cursor.column*qubit_line.separation-4
-  cursor.y=qubit_line.y+cursor.row*qubit_line.separation-4
-  spr(cursor.sprite,cursor.x,cursor.y)
+  cursor.x = qubit_line.x + cursor.column * qubit_line.separation - 4
+  cursor.y = qubit_line.y + cursor.row * qubit_line.separation - 4
+  spr(cursor.sprite, cursor.x, cursor.y)
 
-  for x=0,7 do
-      spr(6, 94, 10 * x + 2)
-      a=x%2
-      b=flr(x/2)%2
-      c=flr(x/4)%2
-      spr(c+4, 97, 10 * x + 2)
-      spr(b+4, 102, 10 * x + 2)
-      spr(a+4, 107, 10 * x + 2)
-      spr(7, 111, 10 * x + 2)
+  for x = 0, 7 do
+    spr(6, 94, 10 * x + 2)
+    a = x % 2
+    b = flr(x/2) % 2
+    c = flr(x/4) % 2
+    spr(c+4, 97, 10 * x + 2)
+    spr(b+4, 102, 10 * x + 2)
+    spr(a+4, 107, 10 * x + 2)
+    spr(7, 111, 10 * x + 2)
   end
 
   --player
-  for y=0,7 do
+  for y = 0, 7 do
       local color
       local prob = probs[y + 1] --supposed to be inverse power of 2 but I'm allowing .01 error
       if prob > .99 then
@@ -468,49 +285,64 @@ function draw_game()
   )
 
   --scores
-  print(player_points,66,2,player.color)
-  print(com_points,58,2,com.color)
+  print(player_points, 66, 2, player.color)
+  print(com_points, 58, 2, com.color)
 end
 
-function update_game()
+function update_circuit_grid_cursor()
+  --- Moves circuit grid cursor
   if btnp(2) and cursor.row > 0 then
-      cursor.row -= 1
+    cursor.row -= 1
   end
+
   if btnp(3) and cursor.row < 2 then
-      cursor.row += 1
+    cursor.row += 1
   end
+
   if btnp(0) and cursor.column > 0 then
-      cursor.column -= 1
+    cursor.column -= 1
   end
+
   if btnp(1) and cursor.column < 7  then
-      cursor.column += 1
+    cursor.column += 1
   end
+end
+
+
+function update_circuit_grid()
+  --- Places a gate and simulates gates on the circuit grid
   if btnp(5) then
     cur_gate = gates[cursor.row+1][cursor.column+1]
-    if cur_gate==2 then
-      gates[cursor.row+1][cursor.column+1]=1
+    if cur_gate == 2 then
+      gates[cursor.row + 1][cursor.column + 1] = 1
     else
-      gates[cursor.row+1][cursor.column+1]=2
-    end
-    sim_cir()
-  end
-  if btnp(4) then
-    cur_gate = gates[cursor.row+1][cursor.column+1]
-    if cur_gate==5 then
-      gates[cursor.row+1][cursor.column+1]=1
-    else
-      gates[cursor.row+1][cursor.column+1]=5
+      gates[cursor.row + 1][cursor.column + 1] = 2
     end
     sim_cir()
   end
 
-  --computer controls
+  if btnp(4) then
+    cur_gate = gates[cursor.row+1][cursor.column+1]
+    if cur_gate == 5 then
+      gates[cursor.row + 1][cursor.column + 1] = 1
+    else
+      gates[cursor.row + 1][cursor.column + 1] = 5
+    end
+    --- move somewhere else
+    sim_cir()
+  end
+end
+
+
+function update_cl_computer_paddle()
+  --- computer controls
   com.y += com.speed
   com.y = max(com.y, 1)
   com.y = min(com.y, 70)
 
   local mid_com = com.y + (com.height/2)
   local r = rnd()
+
   if ball.y - mid_com > 0 then
       if r < .5 then
           com.speed = min(com.speed + .05, .6)
@@ -524,18 +356,40 @@ function update_game()
           com.speed = min(com.speed + .05, .6)
       end
   end
+end
 
-  --score
-  win_score = 7
-  if ball.x > court.right then
-      com_points += 1
-      scored = "com"
-      if com_points < win_score then
-          new_round()
-      else
-          set_scene("game_over")
-      end
+
+function update_q_computer_paddle()
+  --- TODO: when ball collide on edge--> measure
+  --- UNTEST
+  if ball.x > court.edge and counter == 0 then
+    counter = 30
+    meas_prob()
+    for i = 1, 8 do
+        if probs[i] == 1 then
+            beg = 10 * (i - 1)
+            player.y = beg
+        end
+    end
+  elseif ball.x < court.edge and counter > 0 then
+    counter -= 1
+    if counter == 0 then
+      sim_cir()
+    end
   end
+end
+
+function endgame()
+  if ball.x > court.right then
+    com_points += 1
+    scored = "com"
+    if com_points < win_score then
+        new_round()
+    else
+        set_scene("game_over")
+    end
+  end
+
   if ball.x < court.left then
       player_points += 1
       scored = "player"
@@ -545,7 +399,12 @@ function update_game()
           set_scene("game_over")
       end
   end
+end
+
+
+function update_ball()
   --collide with court
+
   if ball.y + ball.width >= court.bottom - 1
   or ball.y <= court.top+1 then
       ball.dy = -ball.dy
@@ -553,6 +412,7 @@ function update_game()
   end
 
   --collide with com
+
   if ball.dx < 0
       and ball.x <= com.x+com.width
       and ball.x >com.x
@@ -563,24 +423,6 @@ function update_game()
       ball.dx = -(ball.dx - ball.speedup)
       sfx(1)
   end
-  --TODO: when ball collide on edge--> measure
-  --UNTEST
-  if ball.x > court.edge and counter==0 then
-      counter=30
-      meas_prob()
-      for i=1,8 do
-          if probs[i] == 1 then
-              beg = 10 * (i - 1)
-              player.y = beg
-          end
-      end
-  elseif ball.x < court.edge and counter > 0 then
-    counter-=1
-    if counter==0 then
-      sim_cir()
-    end
-  end
-  ------------------------
 
   --collide with player
   if ball.dx > 0
@@ -593,110 +435,134 @@ function update_game()
       ball.dx = -(ball.dx - ball.speedup)
       sfx(1)
   end
+
   --ball movement
   ball.x += ball.dx
   ball.y += ball.dy
 end
 
+
+----------------
+-- update game
+----------------
+function update_game()
+  --- update circuit grid cursor
+  update_circuit_grid_cursor()
+
+  --- update and simulate circuit gird
+  update_circuit_grid()
+
+  -- quantum computer player
+  update_q_computer_paddle()
+
+  -- computer player
+  update_cl_computer_paddle()
+
+  --  update ball
+  update_ball()
+
+  -- endgame
+  endgame()
+end
+
 function new_game()
-    set_scene("game")
-    player_points = 0
-    com_points = 0
-    scored = ""
-    blink_timer = 0
+  set_scene("game")
 
-    --variables
-    counter=0
-    player={
-        x = 117,
-        y = 63,
-        color = 7,
-        width = 2,
-        height = 10,
-        speed = 1
-    }
-    com={
-        x = 8,
-        y = 63,
-        color = 7,
-        width = 2,
-        height = 10,
-        speed = 0
-    }
-    gate_type={
-        x = 0,
-        y = 1,
-        z = 2,
-        h = 3
-    }
-    gate_seq={
-      I=1,
-      X=2,
-      Y=3,
-      Z=4,
-      H=5
-    }
-    gates={
-        {1,1,1,1,1,1,1,1},
-        {1,1,1,1,1,1,1,1},
-        {1,1,1,1,1,1,1,1}
-    }
-    -- Relative frequency of the measurement results
-    -- Obtained from simulator
-    probs = {1, 0, 0, 0, 0, 0, 0, 0}
-  --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
-  --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
+  --variables
+  counter=0
+  player={
+    x = 117,
+    y = 63,
+    color = 7,
+    width = 2,
+    height = 10,
+    speed = 1
+  }
 
-    -- How many updates left does the paddle stays measured
-    measured_timer = 0
+  com={
+    x = 8,
+    y = 63,
+    color = 7,
+    width = 2,
+    height = 10,
+    speed = 0
+  }
 
-    cursor = {
-        row=0,
-        column=0,
-        x=0,
-        y=0,
-        sprite=16
-    }
-    --sound
-    if scored=="player" then
-        sfx(3)
-    elseif scored=="com" then
-        sfx(4)
-    else
-        sfx(5)
-    end
-    --court
-    court={
-        left=0,
-        right=127,
-        top=0,
-        bottom=82,
-        edge=107, --when ball collide this line, measure the circuit
-        color=5
-    }
-    --court center line
-    dash_line={
-        x=63,
-        y=0,
-        length=1.5,
-        color=5
-    }
-    --circuit composer
-    composer={
-        left=0,
-        right=127,
-        top=82,
-        bottom=127,
-        color=6
-    }
-    qubit_line={
-        x=10,
-        y=90,
-        length=108,
-        separation=15,
-        color=5
-    }
-    new_round()
+  gate_type={
+    x = 0,
+    y = 1,
+    z = 2,
+    h = 3
+  }
+
+  gate_seq={
+    I=1,
+    X=2,
+    Y=3,
+    Z=4,
+    H=5
+  }
+
+  gates={
+    {1,1,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1}
+  }
+
+  -- Relative frequency of the measurement results
+  -- Obtained from simulator
+  probs = {1, 0, 0, 0, 0, 0, 0, 0}
+
+  -- How many updates left does the paddle stays measured
+  measured_timer = 0
+
+  cursor = {
+      row=0,
+      column=0,
+      x=0,
+      y=0,
+      sprite=16
+  }
+  --sound
+  if scored=="player" then
+      sfx(3)
+  elseif scored=="com" then
+      sfx(4)
+  else
+      sfx(5)
+  end
+  --court
+  court={
+      left=0,
+      right=127,
+      top=0,
+      bottom=82,
+      edge=107, --when ball collide this line, measure the circuit
+      color=5
+  }
+  --court center line
+  dash_line={
+      x=63,
+      y=0,
+      length=1.5,
+      color=5
+  }
+  --circuit composer
+  composer={
+      left=0,
+      right=127,
+      top=82,
+      bottom=127,
+      color=6
+  }
+  qubit_line={
+      x=10,
+      y=90,
+      length=108,
+      separation=15,
+      color=5
+  }
+  new_round()
 end
 
 function new_round()
