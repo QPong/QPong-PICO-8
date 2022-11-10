@@ -1,0 +1,16 @@
+{
+  "name": "pico-pong-online",
+  "version": "1.0.0",
+  "private": "true",
+  "description": "Example of using pico-socket for an online pong game",
+  "main": "index.js",
+  "scripts": {
+    "start": "PORT=4001 DEBUG=true node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pico-socket": "^1.1.0"
+  }
+}

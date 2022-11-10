@@ -230,6 +230,7 @@ function draw_game()
   cursor.y = qubit_line.y + cursor.row * qubit_line.separation - 4
   spr(cursor.sprite, cursor.x, cursor.y)
 
+  --- player 1
   for x = 0, 7 do
     spr(6, 94, 10 * x + 2)
     a = x % 2
@@ -239,6 +240,18 @@ function draw_game()
     spr(b+4, 102, 10 * x + 2)
     spr(a+4, 107, 10 * x + 2)
     spr(7, 111, 10 * x + 2)
+  end
+
+  --- for player 2
+  for x = 0, 7 do
+    spr(6, 14, 10 * x + 2)
+    a = x % 2
+    b = flr(x/2) % 2
+    c = flr(x/4) % 2
+    spr(c+4, 17, 10 * x + 2)
+    spr(b+4, 22, 10 * x + 2)
+    spr(a+4, 27, 10 * x + 2)
+    spr(7, 31, 10 * x + 2)
   end
 
   --player

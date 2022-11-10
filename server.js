@@ -5,7 +5,7 @@ createPicoSocketServer({
   assetFilesPath: ".",
 
   // where the game html file is
-  htmlGameFilePath: "./pong.html",
+  htmlGameFilePath: "./qpong.html",
 
   clientConfig: {
     // index to read to determine the room
@@ -20,9 +20,9 @@ createPicoSocketServer({
       // there is no zeroth player,
       [],
       // first player position, and game data
-      [4, 2, 3, 6, 7, 8, 9],
+      [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 22, 23, 24, 25],
       // second player position
-      [5],
+      [12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
     ],
   },
 });
