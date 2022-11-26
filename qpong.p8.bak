@@ -34,30 +34,34 @@ lookup["player_id"]   = 0x5f80
 lookup["room_id"]     = 0x5f81
 lookup["score_1"]     = 0x5f82
 lookup["score_2"]     = 0x5f83
-lookup["ball_x_pos"]  = 0x5f84
-lookup["ball_y_pos"]  = 0x5f85
-lookup["ball_x_spd"]  = 0x5f86
-lookup["ball_y_spd"]  = 0x5f87
-lookup["ball_x_dir"]  = 0x5f88
-lookup["ball_y_dir"]  = 0x5f89
-lookup["player_1_y"]  = 0x5f90
-lookup["player_1_prob_1"]  = 0x5f91
-lookup["player_1_prob_2"]  = 0x5f92
-lookup["player_1_prob_3"]  = 0x5f93
-lookup["player_1_prob_4"]  = 0x5f94
-lookup["player_1_prob_5"]  = 0x5f95
-lookup["player_1_prob_6"]  = 0x5f96
-lookup["player_1_prob_7"]  = 0x5f97
-lookup["player_1_prob_8"]  = 0x5f98
-lookup["player_2_y"]  = 0x5f99
-lookup["player_2_prob_1"]  = 0x5f9a
-lookup["player_2_prob_2"]  = 0x5f9b
-lookup["player_2_prob_3"]  = 0x5f9c
-lookup["player_2_prob_4"]  = 0x5f9d
-lookup["player_2_prob_5"]  = 0x5f9e
-lookup["player_2_prob_6"]  = 0x5f9f
-lookup["player_2_prob_7"]  = 0x5fa0
-lookup["player_2_prob_8"]  = 0x5fa1
+lookup["ball_x_pos_flr"]  = 0x5f84
+lookup["ball_x_pos_rem"]  = 0x5f85
+lookup["ball_y_pos_flr"]  = 0x5f86
+lookup["ball_y_pos_rem"]  = 0x5f87
+lookup["ball_x_spd_flr"]  = 0x5f88
+lookup["ball_x_spd_rem"]  = 0x5f89
+lookup["ball_x_spd_dir"]  = 0x5f90
+lookup["ball_y_spd_flr"]  = 0x5f91
+lookup["ball_y_spd_rem"]  = 0x5f92
+lookup["ball_y_spd_dir"]  = 0x5f93
+lookup["player_1_y"]  = 0x5f94
+lookup["player_1_prob_1"]  = 0x5f95
+lookup["player_1_prob_2"]  = 0x5f96
+lookup["player_1_prob_3"]  = 0x5f97
+lookup["player_1_prob_4"]  = 0x5f98
+lookup["player_1_prob_5"]  = 0x5f99
+lookup["player_1_prob_6"]  = 0x5f9a
+lookup["player_1_prob_7"]  = 0x5f9b
+lookup["player_1_prob_8"]  = 0x5f9c
+lookup["player_2_y"]  = 0x5f9d
+lookup["player_2_prob_1"]  = 0x5f9e
+lookup["player_2_prob_2"]  = 0x5f9f
+lookup["player_2_prob_3"]  = 0x5fa0
+lookup["player_2_prob_4"]  = 0x5fa1
+lookup["player_2_prob_5"]  = 0x5fa2
+lookup["player_2_prob_6"]  = 0x5fa3
+lookup["player_2_prob_7"]  = 0x5fa4
+lookup["player_2_prob_8"]  = 0x5fa5
 
 -- nset, takes in a lookup key
 --  and a value to write to
@@ -80,16 +84,24 @@ function ninc(key, value)
     nset(key, nget(key) + value)
 end
 
+function nget_float(key)
+  return nget(key..'_flr') + nget(key..'_rem') / 10
+end
+
+function nset_float(key, val)
+  nset(key..'_flr', flr(val))
+  nset(key..'_rem', (val % 1) * 10)
+end
+
 ----------------
---init
+-- init
 ----------------
 
---globals
+-- globals
 win_score = 7
 scored = 1
 blink_timer = 0
 shots=255
-
 room_code = {0,0,0,0}
 room_code_index=1
 r_arrow={}
@@ -101,7 +113,6 @@ l_arrow.x=49
 l_arrow.y=64
 l_arrow.shake=0
 x_shake=0
-
 
 room_id = 2
 player_id = 2
@@ -115,16 +126,16 @@ player_2_x = 117
 --ball
 ball_color = 7
 ball_width = 2
-ball_speedup = 1
+ball_speedup = 0.5
 
 --court
 court = {
-  left = 0,
+  left = 0.001,
   right = 127,
-  top = 0,
+  top = 0.001,
   bottom = 82,
-  right_edge = 107, --when ball collide this line, measure the circuit
-  left_edge = 20, --when ball collide this line, measure the circuit
+  right_edge = 107, --when ball collide this line, measure player 2 circuit
+  left_edge = 20, --when ball collide this line, measure player 1 circuit
   color = 5
 }
 
@@ -357,10 +368,10 @@ function draw_game()
 
     -- ball
     rectfill(
-        nget("ball_x_pos"),
-        nget("ball_y_pos"),
-        nget("ball_x_pos") + ball_width,
-        nget("ball_y_pos") + ball_width,
+        nget_float("ball_x_pos"),
+        nget_float("ball_y_pos"),
+        nget_float("ball_x_pos") + ball_width,
+        nget_float("ball_y_pos") + ball_width,
         ball_color
     )
 
@@ -415,7 +426,7 @@ end
 
 function update_paddles()
     -- measure player 1 near the left edge
-    if nget("ball_x_dir") == 0 and nget("ball_x_pos") < court.left_edge then
+    if nget("ball_x_spd_dir") == 0 and nget_float("ball_x_pos") < court.left_edge then
         measure(1)
         for i = 1,8 do
             prob_key = "player_1_prob_"..i
@@ -425,7 +436,7 @@ function update_paddles()
             end
         end
     -- measure player 2 near the right edge
-    elseif nget("ball_x_dir") == 1 and nget("ball_x_pos") > court.right_edge then
+    elseif nget("ball_x_spd_dir") == 1 and nget_float("ball_x_pos") > court.right_edge then
         measure(2)
         for i = 1,8 do
             prob_key = "player_2_prob_"..i
@@ -439,22 +450,22 @@ end
 
 
 function endgame()
-    if nget("ball_x_dir") == 1 and nget("ball_x_pos") >= court.right then
+    if nget("ball_x_spd_dir") == 1 and nget_float("ball_x_pos") >= court.right then
         ninc("score_1", 1)
         scored = 1
         if nget("score_1") < win_score then
-            --simulate_circuit(2)
+            --simulate_circuit(player_id)
             reset_ball()
         else
             set_scene("game_over")
         end
     end
 
-    if nget("ball_x_dir") == 0 and nget("ball_x_pos") <= court.left then
+    if nget("ball_x_spd_dir") == 0 and nget_float("ball_x_pos") <= court.left then
         ninc("score_2", 1)
         scored = 2
         if nget("score_2") < win_score then
-            --simulate_circuit()
+            --simulate_circuit(player_id)
             reset_ball()
         else
             set_scene("game_over")
@@ -470,100 +481,100 @@ function update_ball()
     local new_dy = 0
 
     -- collide with court
-    if nget("ball_y_pos") + ball_width >= court.bottom - 1
-    or nget("ball_y_pos") <= court.top + 1 then
-        nset("ball_y_dir", (nget("ball_y_dir") + 1) % 2)
+    if nget_float("ball_y_pos") + ball_width >= court.bottom - 1
+    or nget_float("ball_y_pos") <= court.top + 1 then
+        nset("ball_y_spd_dir", (nget("ball_y_spd_dir") + 1) % 2)
         sfx(2)
     end
 
     -- collide with player 1
-    if nget("ball_x_dir") == 0
-        and nget("ball_x_pos") <= player_1_x + player_width
-        and nget("ball_x_pos") >= player_1_x
-        and (((nget("ball_y_pos") + ball_width <= nget("player_1_y") + player_height)
-        and (nget("ball_y_pos") + ball_width >= nget("player_1_y")))
-        or ((nget("ball_y_pos") <= nget("player_1_y") + player_height)
-        and (nget("ball_y_pos") >= nget("player_1_y"))))
+    if nget("ball_x_spd_dir") == 0
+        and nget_float("ball_x_pos") <= player_1_x + player_width
+        and nget_float("ball_x_pos") >= player_1_x
+        and (((nget_float("ball_y_pos") + ball_width <= nget("player_1_y") + player_height)
+        and (nget_float("ball_y_pos") + ball_width >= nget("player_1_y")))
+        or ((nget_float("ball_y_pos") <= nget("player_1_y") + player_height)
+        and (nget_float("ball_y_pos") >= nget("player_1_y"))))
      then
-        new_dy = nget("ball_y_spd") - 1.0 * ball_speedup
-        nset("ball_y_spd", abs(new_dy))
+        new_dy = nget_float("ball_y_spd") - 1.7 * ball_speedup
+        nset_float("ball_y_spd", abs(new_dy))
 
         if new_dy < 0 then
-          nset("ball_y_dir", 1)
+          nset("ball_y_spd_dir", 1)
         else
-          nset("ball_y_dir", 0)
+          nset("ball_y_spd_dir", 0)
         end
 
-        new_dx = nget("ball_x_spd") - 1.0 * ball_speedup
-        nset("ball_x_spd", abs(new_dx))
+        new_dx = -(nget_float("ball_x_spd") - ball_speedup)
+        nset_float("ball_x_spd", abs(new_dx))
 
         if new_dx < 0 then
-          nset("ball_x_dir", 0)
+          nset("ball_x_spd_dir", 1)
         else
-          nset("ball_x_dir", 1)
+          nset("ball_x_spd_dir", 0)
         end
 
-        --nget("ball_x_spd", -(nget("ball_x_spd") - 1.0 * ball_speedup))
-        --nset("ball_x_dir", (nget("ball_x_dir") + 1) % 2)
-        --nset("ball_y_dir", (nget("ball_y_dir") + 1) % 2)
+        --nget("ball_x_spd", -(nget("ball_x_spd") - 2.0 * ball_speedup))
+        --nset("ball_x_spd_dir", (nget("ball_x_spd_dir") + 1) % 2)
+        --nset("ball_y_spd_dir", (nget("ball_y_spd_dir") + 1) % 2)
         sfx(1)
      end
 
     -- collide with player 2
-    if nget("ball_x_dir") == 1
-        and nget("ball_x_pos") <= player_2_x + player_width
-        and nget("ball_x_pos") >= player_2_x
-        and (((nget("ball_y_pos") + ball_width <= nget("player_2_y") + player_height)
-        and (nget("ball_y_pos") + ball_width >= nget("player_2_y")))
-        or ((nget("ball_y_pos") <= nget("player_2_y") + player_height)
-        and (nget("ball_y_pos") >= nget("player_2_y"))))
+    if nget("ball_x_spd_dir") == 1
+        and nget_float("ball_x_pos") <= player_2_x + player_width
+        and nget_float("ball_x_pos") >= player_2_x
+        and (((nget_float("ball_y_pos") + ball_width <= nget("player_2_y") + player_height)
+        and (nget_float("ball_y_pos") + ball_width >= nget("player_2_y")))
+        or ((nget_float("ball_y_pos") <= nget("player_2_y") + player_height)
+        and (nget_float("ball_y_pos") >= nget("player_2_y"))))
      then
-        new_dy = nget("ball_y_spd") - 1.0 * ball_speedup
-        nset("ball_y_spd", abs(new_dy))
+        new_dy = nget_float("ball_y_spd") - 1.7 * ball_speedup
+        nset_float("ball_y_spd", abs(new_dy))
 
         if new_dy < 0 then
-          nset("ball_y_dir", 1)
+          nset("ball_y_spd_dir", 1)
         else
-          nset("ball_y_dir", 0)
+          nset("ball_y_spd_dir", 0)
         end
 
-        new_dx = nget("ball_x_spd") - 1.0 * ball_speedup
-        nset("ball_x_spd", abs(new_dx))
+        new_dx = -(nget_float("ball_x_spd") - ball_speedup)
+        nset_float("ball_x_spd", abs(new_dx))
 
         if new_dx < 0 then
-          nset("ball_x_dir", 0)
+          nset("ball_x_spd_dir", 1)
         else
-          nset("ball_x_dir", 1)
+          nset("ball_x_spd_dir", 0)
         end
 
-        --nget("ball_x_spd", -(nget("ball_x_spd") - 1.0 * ball_speedup))
-        --nset("ball_x_dir", (nget("ball_x_dir") + 1) % 2)
-        --nset("ball_y_dir", (nget("ball_y_dir") + 1) % 2)
+        --nget("ball_x_spd", -(nget("ball_x_spd") - 2.0 * ball_speedup))
+        --nset("ball_x_spd_dir", (nget("ball_x_spd_dir") + 1) % 2)
+        --nset("ball_y_spd_dir", (nget("ball_y_spd_dir") + 1) % 2)
 
         sfx(1)
      end
 
     -- ball movement
-    dir_x = nget("ball_x_dir")
-    dir_y = nget("ball_y_dir")
+    dir_x = nget("ball_x_spd_dir")
+    dir_y = nget("ball_y_spd_dir")
 
     new_dx = 0
     new_dy = 0
 
     if dir_x == 0 then
-        new_dx = nget("ball_x_pos") - nget("ball_x_spd")
+        new_dx = nget_float("ball_x_pos") - nget_float("ball_x_spd")
     else
-        new_dx = nget("ball_x_pos") + nget("ball_x_spd")
+        new_dx = nget_float("ball_x_pos") + nget_float("ball_x_spd")
     end
 
     if dir_y == 0 then
-        new_dy = nget("ball_y_pos") - nget("ball_y_spd")
+        new_dy = nget_float("ball_y_pos") - nget_float("ball_y_spd")
     else
-        new_dy = nget("ball_y_pos") + nget("ball_y_spd")
+        new_dy = nget_float("ball_y_pos") + nget_float("ball_y_spd")
     end
 
-    nset("ball_x_pos", abs(new_dx))
-    nset("ball_y_pos", abs(new_dy))
+    nset_float("ball_x_pos", abs(new_dx))
+    nset_float("ball_y_pos", abs(new_dy))
 end
 
 
@@ -636,12 +647,18 @@ function init_qpong_game()
 end
 
 function reset_ball()
-    nset("ball_x_pos", 63)
-    nset("ball_y_pos", 33 + rnd(5))
-    nset("ball_x_spd", 1)
-    nset("ball_y_spd", 1)
-    nset("ball_x_dir", flr((nget("ball_x_dir") + rnd(2))) % 2)
-    nset("ball_y_dir",  flr((nget("ball_y_dir") + rnd(2))) % 2)
+    nset_float("ball_x_pos", 63)
+    nset_float("ball_y_pos", 33 + rnd(5))
+    nset_float("ball_x_spd", 0.7)
+    nset_float("ball_y_spd", 0.8)
+
+    if scored == 1 then
+      nset("ball_x_spd_dir", 0)
+    else
+      nset("ball_x_spd_dir", 1)
+    end
+
+    nset("ball_y_spd_dir",  flr((nget("ball_y_spd_dir") + rnd(2))) % 2)
 end
 
 
