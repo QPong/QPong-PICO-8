@@ -44,24 +44,26 @@ lookup["ball_x_spd_dir"]  = 0x5f90
 lookup["ball_y_spd_flr"]  = 0x5f91
 lookup["ball_y_spd_rem"]  = 0x5f92
 lookup["ball_y_spd_dir"]  = 0x5f93
-lookup["player_1_y"]  = 0x5f94
-lookup["player_1_prob_1"]  = 0x5f95
-lookup["player_1_prob_2"]  = 0x5f96
-lookup["player_1_prob_3"]  = 0x5f97
-lookup["player_1_prob_4"]  = 0x5f98
-lookup["player_1_prob_5"]  = 0x5f99
-lookup["player_1_prob_6"]  = 0x5f9a
-lookup["player_1_prob_7"]  = 0x5f9b
-lookup["player_1_prob_8"]  = 0x5f9c
-lookup["player_2_y"]  = 0x5f9d
-lookup["player_2_prob_1"]  = 0x5f9e
-lookup["player_2_prob_2"]  = 0x5f9f
-lookup["player_2_prob_3"]  = 0x5fa0
-lookup["player_2_prob_4"]  = 0x5fa1
-lookup["player_2_prob_5"]  = 0x5fa2
-lookup["player_2_prob_6"]  = 0x5fa3
-lookup["player_2_prob_7"]  = 0x5fa4
-lookup["player_2_prob_8"]  = 0x5fa5
+lookup["player_1_joined"] = 0x5f94
+lookup["player_1_y"]  = 0x5f95
+lookup["player_1_prob_1"]  = 0x5f96
+lookup["player_1_prob_2"]  = 0x5f97
+lookup["player_1_prob_3"]  = 0x5f98
+lookup["player_1_prob_4"]  = 0x5f99
+lookup["player_1_prob_5"]  = 0x5f9a
+lookup["player_1_prob_6"]  = 0x5f9b
+lookup["player_1_prob_7"]  = 0x5f9c
+lookup["player_1_prob_8"]  = 0x5f9d
+lookup["player_2_joined"] = 0x5f9e
+lookup["player_2_y"]  = 0x5f9f
+lookup["player_2_prob_1"]  = 0x5fa0
+lookup["player_2_prob_2"]  = 0x5fa1
+lookup["player_2_prob_3"]  = 0x5fa2
+lookup["player_2_prob_4"]  = 0x5fa3
+lookup["player_2_prob_5"]  = 0x5fa4
+lookup["player_2_prob_6"]  = 0x5fa5
+lookup["player_2_prob_7"]  = 0x5fa6
+lookup["player_2_prob_8"]  = 0x5fa7
 
 -- nset, takes in a lookup key
 --  and a value to write to
@@ -102,20 +104,6 @@ win_score = 7
 scored = 1
 blink_timer = 0
 shots=255
-room_code = {0,0,0,0}
-room_code_index=1
-r_arrow={}
-r_arrow.x=68
-r_arrow.y=64
-r_arrow.shake=0
-l_arrow={}
-l_arrow.x=49
-l_arrow.y=64
-l_arrow.shake=0
-x_shake=0
-
-room_id = 2
-player_id = 2
 player_color = 7
 player_width = 2
 player_height = 10
@@ -123,12 +111,12 @@ player_speed = 1
 player_1_x = 8
 player_2_x = 117
 
---ball
+-- ball
 ball_color = 7
 ball_width = 2
 ball_speedup = 0.5
 
---court
+-- court
 court = {
   left = 0.001,
   right = 127,
@@ -139,7 +127,7 @@ court = {
   color = 5
 }
 
---court center line
+-- court center line
 dash_line = {
     x = 63,
     y = 0,
@@ -147,7 +135,7 @@ dash_line = {
     color = 5
 }
 
---circuit composer
+-- circuit composer
 composer = {
     left = 0,
     right = 127,
@@ -156,7 +144,7 @@ composer = {
     color = 6
 }
 
---qubit line
+-- qubit line
 qubit_line = {
     x = 10,
     y = 90,
@@ -187,6 +175,11 @@ gates = {
 }
 
 function _init()
+    nset("player_id", 0)
+    nset("room_id", 0)
+    nset("player_1_joined", 0)
+    nset("player_2_joined", 0)
+
     set_scene("title")
     init_menu()
     -- use gameboy palette
@@ -203,9 +196,9 @@ function set_scene(s)
     elseif s == "game" then
         _update60 = update_game
         _draw = draw_game
-    elseif s == "rooms" then
-        _update60 = update_rooms
-        _draw = draw_room_code
+    elseif s == "select" then
+        _update60 = player_select_update
+        _draw = player_select_draw
     elseif s == "game_over" then
         _update60 = update_game_over
         _draw = draw_game_over
@@ -226,8 +219,7 @@ function update_title()
             menu_timer > 1 then
 
             if menu.options[menu.sel] == "start" then
-                --set_scene("rooms")
-                init_qpong_game()
+                set_scene("select")
             elseif menu.options[menu.sel] == "colors" then
                 init_settings()
             elseif menu.options[menu.sel] == "credits" then
@@ -300,10 +292,10 @@ function draw_game()
         end
     end
 
-    --cursor
-    cursor.x = qubit_line.x + cursor.column * qubit_line.separation - 4
-    cursor.y = qubit_line.y + cursor.row * qubit_line.separation - 4
-    spr(cursor.sprite, cursor.x, cursor.y)
+    -- cursor
+    grid_cursor.x = qubit_line.x + grid_cursor.column * qubit_line.separation - 4
+    grid_cursor.y = qubit_line.y + grid_cursor.row * qubit_line.separation - 4
+    spr(grid_cursor.sprite, grid_cursor.x, grid_cursor.y)
 
     -- player 1 ket sprites
     for x = 0,7 do
@@ -382,20 +374,20 @@ end
 
 function update_circuit_grid_cursor()
     -- moves circuit grid cursor
-    if btnp(2) and cursor.row > 0 then
-        cursor.row -= 1
+    if btnp(2) and grid_cursor.row > 0 then
+        grid_cursor.row -= 1
     end
 
-    if btnp(3) and cursor.row < 2 then
-        cursor.row += 1
+    if btnp(3) and grid_cursor.row < 2 then
+        grid_cursor.row += 1
     end
 
-    if btnp(0) and cursor.column > 0 then
-        cursor.column -= 1
+    if btnp(0) and grid_cursor.column > 0 then
+        grid_cursor.column -= 1
     end
 
-    if btnp(1) and cursor.column < 7  then
-        cursor.column += 1
+    if btnp(1) and grid_cursor.column < 7  then
+        grid_cursor.column += 1
     end
 end
 
@@ -403,23 +395,23 @@ end
 function update_circuit_grid()
     --Places a gate and simulates gates on the circuit grid
     if btnp(5) then
-        cur_gate = gates[cursor.row+1][cursor.column+1]
+        cur_gate = gates[grid_cursor.row+1][grid_cursor.column+1]
         if cur_gate == 2 then
-            gates[cursor.row + 1][cursor.column + 1] = 1
+            gates[grid_cursor.row + 1][grid_cursor.column + 1] = 1
         else
-            gates[cursor.row + 1][cursor.column + 1] = 2
+            gates[grid_cursor.row + 1][grid_cursor.column + 1] = 2
         end
-        simulate_circuit(player_id)
+        simulate_circuit(nget("player_id"))
     end
 
     if btnp(4) then
-        cur_gate = gates[cursor.row+1][cursor.column+1]
+        cur_gate = gates[grid_cursor.row+1][grid_cursor.column+1]
         if cur_gate == 5 then
-            gates[cursor.row + 1][cursor.column + 1] = 1
+            gates[grid_cursor.row + 1][grid_cursor.column + 1] = 1
         else
-            gates[cursor.row + 1][cursor.column + 1] = 5
+            gates[grid_cursor.row + 1][grid_cursor.column + 1] = 5
         end
-        simulate_circuit(player_id)
+        simulate_circuit(nget("player_id"))
     end
 end
 
@@ -427,23 +419,27 @@ end
 function update_paddles()
     -- measure player 1 near the left edge
     if nget("ball_x_spd_dir") == 0 and nget_float("ball_x_pos") < court.left_edge then
-        measure(1)
-        for i = 1,8 do
-            prob_key = "player_1_prob_"..i
-            probs_i = nget(prob_key)
-            if probs_i == shots then
-                nset("player_1_y", 10 * (i  - 1))
-            end
+        if (nget("player_id") == 1) then
+          measure(1)
+          for i = 1,8 do
+              prob_key = "player_1_prob_"..i
+              probs_i = nget(prob_key)
+              if probs_i == shots then
+                  nset("player_1_y", 10 * (i  - 1))
+              end
+          end
         end
     -- measure player 2 near the right edge
     elseif nget("ball_x_spd_dir") == 1 and nget_float("ball_x_pos") > court.right_edge then
-        measure(2)
-        for i = 1,8 do
-            prob_key = "player_2_prob_"..i
-            probs_i = nget(prob_key)
-            if probs_i == shots then
-                nset("player_2_y", 10 * (i  - 1))
-            end
+        if (nget("player_id") == 2) then
+          measure(2)
+          for i = 1,8 do
+              prob_key = "player_2_prob_"..i
+              probs_i = nget(prob_key)
+              if probs_i == shots then
+                  nset("player_2_y", 10 * (i  - 1))
+              end
+          end
         end
     end
 end
@@ -454,7 +450,7 @@ function endgame()
         ninc("score_1", 1)
         scored = 1
         if nget("score_1") < win_score then
-            --simulate_circuit(player_id)
+            --simulate_circuit(2)
             reset_ball()
         else
             set_scene("game_over")
@@ -465,7 +461,7 @@ function endgame()
         ninc("score_2", 1)
         scored = 2
         if nget("score_2") < win_score then
-            --simulate_circuit(player_id)
+            --simulate_circuit(1)
             reset_ball()
         else
             set_scene("game_over")
@@ -581,7 +577,7 @@ function update_game()
     --- update circuit grid cursor
     update_circuit_grid_cursor()
 
-    --- update and soimulate circuit grid
+    --- update and simulate circuit grid
     update_circuit_grid()
 
     -- quantum paddles
@@ -599,7 +595,7 @@ function init_qpong_game()
     set_scene("game")
 
     -- reset cursor
-    cursor = {
+    grid_cursor = {
         row=0,
         column=0,
         x=0,
@@ -630,9 +626,6 @@ function init_qpong_game()
     nset("score_1", 0)
     nset("score_2", 0)
 
-    nset("player_id", player_id)
-    nset("room_id", room_id)
-
     -- sound
     if scored == 1 then
         sfx(3)
@@ -660,47 +653,46 @@ function reset_ball()
     nset("ball_y_spd_dir",  flr((nget("ball_y_spd_dir") + rnd(2))) % 2)
 end
 
+function player_select_update()
+  spectating = nget("player_id") == 0
+  can_join_as_1 = nget("player_1_joined") == 0
+  can_join_as_2 = nget("player_2_joined") == 0
+  can_join = (can_join_as_1 or can_join_as_2)
 
-function update_rooms()
-  if (btnp(➡️)) then
-      r_arrow.shake=10
-      room_code_index+=1
-      sfx(1)
+  if (can_join and spectating) then
+    if (btnp(4) or btnp(5)) then
+        if (can_join_as_1) then
+          nset("player_id", 1)
+          nset("player_1_joined", 1)
+        elseif (can_join_as_2) then
+          nset("player_id", 2)
+          nset("player_2_joined", 1)
+        end
+    end
   end
 
-  if (btnp(⬅️)) then
-      l_arrow.shake=10
-      room_code_index-=1
-      sfx(1)
+  if (btnp(2)) then
+    nset("room_id", (nget("room_id")+1)%5)
   end
 
-  if (room_code_index>4) room_code_index=1
-
-  if (room_code_index<1) room_code_index=4
-
-  if (btnp(⬆️)) then
-      room_code[room_code_index]+=1
-      room_code[room_code_index]=room_code[room_code_index]%10
-      sfx(1)
+  if (btnp(3)) then
+    nset("room_id", (nget("room_id")-1)%5)
   end
 
-  if (btnp(⬇️)) then
-    room_code[room_code_index]-=1
-    room_code[room_code_index]=room_code[room_code_index]%10
-    sfx(1)
+  if ((nget("player_1_joined") != 0) and (nget("player_2_joined") != 0)) then
+    init_qpong_game()
   end
 end
 
-function draw_room_code()
-    print("➡️", r_arrow.x+rnd(r_arrow.shake/2), r_arrow.y-(rnd(r_arrow.shake/2))+(rnd(r_arrow.shake/2)), 7)
-    print("⬅️", l_arrow.x-rnd(l_arrow.shake/2),  l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)),  7)
-    offsetx=room_code_index*8
-    print("_",41+offsetx, 52, 11)
-    print("room code", 45, 42, menu_state=="room" and 11 or 7)
-    print(room_code[1], 49,50, room_code_index==1 and 11 or 7)
-    print(room_code[2], 57,50, room_code_index==2 and 11 or 7)
-    print(room_code[3], 65,50, room_code_index==3 and 11 or 7)
-    print(room_code[4], 73,50, room_code_index==4 and 11 or 7)
+
+function player_select_draw()
+  cls()
+  draw_game_logo()
+
+  print("❎ - player 1", 5, 70+10, 12)
+  print("🅾️ - player 2", 70, 70+10, 8)
+  cursor(37, 2, 3)
+  print("⬆️ room:"..nget("room_id").." ⬇️", 37, 60+10)
 end
 
 ----------------
