@@ -1,9 +1,9 @@
 {
-  "name": "pico-pong-online",
-  "version": "1.0.0",
-  "private": "true",
-  "description": "Example of using pico-socket for an online pong game",
-  "main": "index.js",
+  "name": "QPong-2",
+  "version": "0.0.1",
+  "private": "false",
+  "description": "Multiplayer QPong",
+  "main": "server.js",
   "scripts": {
     "start": "DEBUG=true PORT=8888 node server.js"
   },
@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pico-socket": "^1.0.2"
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4"
   }
 }
