@@ -6,7 +6,7 @@
   "main": "functions/server.js",
   "scripts": {
     "build": "netlify-lambda build express",
-    "start": "DEBUG=true PORT=8888 node server-local.js"
+    "start": "DEBUG=true PORT=8889 node server-local.js"
   },
   "keywords": [],
   "author": "",

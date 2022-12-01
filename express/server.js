@@ -1,4 +1,5 @@
 const path = require("path");
+const serverless = require('serverless-http');
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -32,13 +33,13 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // read in the html file now, so we can append some script tags for the client side JS
-const htmlFileData = fs.readFileSync('./qpong.html');
+const htmlFileData = fs.readFileSync(path.join(__dirname, '../qpong.html'));
 const htmlFileTemplate = htmlFileData.toString();
 
 // build script tags to inject in the head of the document
 const clientSideCode = `
     <script src="/socket.io/socket.io.js"></script>
-    <script src="./client.js"></script>
+    <script src="../client.js"></script>
   </head>
 `;
 
@@ -46,17 +47,11 @@ const clientSideCode = `
 const modifiedTemplate = htmlFileTemplate.replace("</head>", clientSideCode);
 
 // host the static files
-app.use(express.static(path.join(process.cwd(), './')));
+app.use(express.static(path.join(__dirname, '../')));
 app.use((__req, res) => {
   // by default serve the modified html game file
   return res.send(modifiedTemplate);
 });
-
-// host on port 5000
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`Server Running http://localhost:${PORT}`)
-);
 
 // socket is a specific connection between the server and the client
 io.on("connection", (socket) => {
@@ -84,3 +79,6 @@ io.on("connection", (socket) => {
     }
   });
 });
+
+module.exports = app;
+module.exports.handler = serverless(app);
