@@ -3,15 +3,18 @@
   "version": "0.0.1",
   "private": "false",
   "description": "Multiplayer QPong",
-  "main": "server.js",
+  "main": "functions/server.js",
   "scripts": {
-    "start": "DEBUG=true PORT=8888 node server.js"
+    "build": "netlify-lambda build express",
+    "start": "DEBUG=true PORT=8888 node server-local.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
+    "netlify-lambda": "^2.0.15",
+    "serverless-http": "^3.1.0",
     "socket.io": "^4.5.4"
   }
 }
