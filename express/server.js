@@ -29,29 +29,11 @@ const emptyArrayWithData = (data) => {
 */
 // required "create the webserver" logic
 const app = express();
+const router = express.Router();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// read in the html file now, so we can append some script tags for the client side JS
-const htmlFileData = fs.readFileSync(path.join(__dirname, '../qpong.html'));
-const htmlFileTemplate = htmlFileData.toString();
-
-// build script tags to inject in the head of the document
-const clientSideCode = `
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="../client.js"></script>
-  </head>
-`;
-
-// add the client side code
-const modifiedTemplate = htmlFileTemplate.replace("</head>", clientSideCode);
-
-// host the static files
 app.use(express.static(path.join(__dirname, '../')));
-app.use((__req, res) => {
-  // by default serve the modified html game file
-  return res.send(modifiedTemplate);
-});
 
 // socket is a specific connection between the server and the client
 io.on("connection", (socket) => {
@@ -79,6 +61,25 @@ io.on("connection", (socket) => {
     }
   });
 });
+// read in the html file now, so we can append some script tags for the client side JS
+const htmlFileData = fs.readFileSync(path.join(__dirname, '../qpong.html'));
+const htmlFileTemplate = htmlFileData.toString();
+
+// build script tags to inject in the head of the document
+const clientSideCode = `
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../client.js"></script>
+  </head>
+`;
+
+// add the client side code
+const modifiedTemplate = htmlFileTemplate.replace("</head>", clientSideCode);
+// host the static files
+
+router.get('/', (req, res) => {
+  return res.send(modifiedTemplate);
+})
+app.use('/.netlify/functions/server', router);  // path must route to lambda
 
 module.exports = app;
 module.exports.handler = serverless(app);
