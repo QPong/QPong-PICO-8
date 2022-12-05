@@ -69,14 +69,14 @@ lookup["player_2_prob_8"]  = 0x5fa1
 --  and a value to write to
 --  that address
 function nset(key, value)
-  poke(lookup[key], value)
+    poke(lookup[key], value)
 end
 
 -- nget, takes in a lookup key
 --  and returns the value at
 --  that address
 function nget(key)
-  return peek(lookup[key])
+    return peek(lookup[key])
 end
 
 -- ninc, takes in a lookup key
@@ -87,19 +87,20 @@ function ninc(key, value)
 end
 
 function nget_float(key)
-  return nget(key..'_flr') + nget(key..'_rem') / 10
+    return nget(key..'_flr') + nget(key..'_rem') / 10
 end
 
 function nset_float(key, val)
-  nset(key..'_flr', flr(val))
-  nset(key..'_rem', (val % 1) * 10)
+    nset(key..'_flr', flr(val))
+    nset(key..'_rem', (val % 1) * 10)
 end
 
 ----------------
 -- init
 ----------------
-
 -- globals
+menu_state = "room"
+room_id = flr(rnd(100))
 win_score = 4
 scored = 1
 blink_timer = 0
@@ -118,13 +119,13 @@ ball_speedup = 0.05
 
 -- court
 court = {
-  left = 0.5,
-  right = 127,
-  top = 0.5,
-  bottom = 82,
-  right_edge = 107, --when ball collide this line, measure player 2 circuit
-  left_edge = 20, --when ball collide this line, measure player 1 circuit
-  color = 5
+    left = 0.5,
+    right = 127,
+    top = 0.5,
+    bottom = 82,
+    right_edge = 107, --when ball collide this line, measure player 2 circuit
+    left_edge = 20, --when ball collide this line, measure player 1 circuit
+    color = 5
 }
 
 -- court center line
@@ -175,11 +176,6 @@ gates = {
 }
 
 function _init()
-    nset("player_id", 0)
-    nset("room_id", 0)
-    nset("player_1_joined", 0)
-    nset("player_2_joined", 0)
-
     set_scene("title")
     init_menu()
     -- use gameboy palette
@@ -197,8 +193,8 @@ function set_scene(s)
         _update = update_game
         _draw = draw_game
     elseif s == "select" then
-        _update = player_select_update
-        _draw = player_select_draw
+        _update = select_update
+        _draw = select_draw
     elseif s == "game_over" then
         _update = update_game_over
         _draw = draw_game_over
@@ -326,6 +322,7 @@ function draw_game()
           local color
           local prob = nget("player_"..i.."_prob_"..y)
 
+          -- dangerous, hard coded for 255 shots !!
           if prob > 252 then
               color = 7
           elseif prob > 124 then
@@ -465,7 +462,7 @@ function endgame()
         if nget("score_2") < win_score then
             --simulate_circuit(1)
             if (nget("player_id") == 1) then
-              simulate_circuit(1)
+                simulate_circuit(1)
             end
             reset_ball()
         else
@@ -633,59 +630,107 @@ function reset_ball()
     nset("ball_y_spd_dir",  flr((nget("ball_y_spd_dir") + rnd(2))) % 2)
 end
 
-function player_select_update()
-  spectating = nget("player_id") == 0
-  can_join_as_1 = nget("player_1_joined") == 0
-  can_join_as_2 = nget("player_2_joined") == 0
-  can_join = (can_join_as_1 or can_join_as_2)
+function select_update()
+  blink_timer = (blink_timer + 1) % 60
 
-  if (can_join and spectating) then
-    if (btnp(4) or btnp(5)) then
-        if (can_join_as_1) then
-          nset("player_id", 1)
-          nset("player_1_joined", 1)
-        elseif (can_join_as_2) then
-          nset("player_id", 2)
-          nset("player_2_joined", 1)
-        end
-    end
+  if menu_state == "room" then
+
+      if (btnp(2)) then
+          room_id = (room_id + 1) % 100
+      end
+
+      if (btnp(3)) then
+          room_id = (room_id - 1) % 100
+      end
+
+
+      if (btnp(5)) then
+          nset("room_id", room_id)
+          nset("player_id", 0)
+          nset("player_1_joined", -1)
+          nset("player_2_joined", -2)
+          menu_state = "player"
+      end
   end
 
-  if (btnp(2)) then
-    nset("room_id", (nget("room_id")+1)%5)
+
+  if menu_state == "player" then
+      spectating = nget("player_id") == 0
+      can_join_as_1 = nget("player_1_joined") != nget("room_id")
+      can_join_as_2 = nget("player_2_joined") != nget("room_id")
+      can_join = (can_join_as_1 or can_join_as_2)
+
+      if (can_join and spectating) then
+          if (btnp(0) and can_join_as_1) then
+              nset("player_id", 1)
+              nset("player_1_joined", nget("room_id"))
+              menu_state = "ready"
+          end
+
+          if (btnp(1) and can_join_as_2) then
+              nset("player_id", 2)
+              nset("player_2_joined", nget("room_id"))
+              menu_state = "ready"
+          end
+      end
   end
 
-  if (btnp(3)) then
-    nset("room_id", (nget("room_id")-1)%5)
-  end
-
-  if ((nget("player_1_joined") == 1) and (nget("player_2_joined") == 1)) then
-    init_qpong_game()
+  if menu_state == "ready" then
+      if (nget("player_1_joined") == nget("player_2_joined")) then
+          init_qpong_game()
+      end
   end
 end
 
 
-function player_select_draw()
-  cls()
-  draw_game_logo()
+function select_draw()
+    cls()
+    draw_game_logo()
 
-  print("❎ - player 1", 5, 70+10, 12)
-  print("🅾️ - player 2", 70, 70+10, 8)
-  cursor(37, 2, 3)
-  print("⬆️ room:"..nget("room_id").." ⬇️", 37, 60+10)
+    color_stale = 7
+    color_flash = 8 + ((blink_timer/2) % 6)
+
+    if menu_state == "room" then
+        --print("", 31, 90, color_stale)
+        print("⬆️ room:"..room_id.." ⬇️", 38, 70, color_stale)
+        print("press ❎ to lock in room", 17, 70+10, color_stale)
+    elseif menu_state == "player" then
+        can_join_as_1 = nget("player_1_joined") != nget("room_id")
+        can_join_as_2 = nget("player_2_joined") != nget("room_id")
+        can_join = (can_join_as_1 or can_join_as_2)
+
+        if (not can_join) then
+            print("occupied", 50, 70, color_stale)
+        end
+
+        if (can_join_as_1) then
+            print("press ⬅️ to join as player 1", 8, 70, color_stale)
+        end
+
+        if (can_join_as_2) then
+            print("press ➡️ to join as player 2", 8, 70+10, color_stale)
+        end
+    elseif menu_state == "ready" then
+          print("waiting", 50, 70, color_flash)
+    end
 end
 
 ----------------
 -- game over
 ----------------
 function update_game_over()
-    nset("player_id", 0)
-    nset("player_1_joined", 0)
-    nset("player_2_joined", 0)
+    nset("player_"..nget("player_id").."_joined", -1)
+
+    if btnp(5) then
+        nset("player_"..nget("player_id").."_joined", nget("room_id"))
+        menu_state = "ready"
+        set_scene("select")
+    end
 
     if btnp(4) then
-      set_scene("select")
+        stop()
     end
+
 end
 
 function draw_game_over()
@@ -707,20 +752,20 @@ function draw_game_over()
         print("for the first time ",44,58,8)
         print("in human history!",56,66,8)
     else
-      -- com win
-      print("classical computers",8,28,8)
-      print("still rule the world!",40,50,8)
-      -- cat
-      sspr(0,64,16,16,2,94,32,32)
+        -- com win
+        print("classical computers",8,28,8)
+        print("still rule the world!",40,50,8)
+        -- cat
+        sspr(0,64,16,16,2,94,32,32)
 
-      -- computer
-      sspr(32,64,16,16,96,4,32,32)
+        -- computer
+        sspr(32,64,16,16,96,4,32,32)
     end
 
     -- restart
     if blink_timer < 40 then
-        print("press z to restart", 24, 80, 10)
-        print("press \142 to share score", 24, 90, 10)
+        print("press  ❎  to rematch", 24, 80, 10)
+        print("press 🅾️ to quit", 24, 90, 10)
     end
 end
 
@@ -804,13 +849,14 @@ function measure(p_id)
         prob_key = "player_"..p_id.."_prob_"..i
         probs_i = nget(prob_key)
         if (r > probs_i) then
-            num = r - probs_i
-            r = num
+              num = r - probs_i
+              r = num
         elseif (r <= probs_i) then
-            idx = i
-            break
+              idx = i
+              break
         end
     end
+
     for i = 1,8 do
         prob_key = "player_"..p_id.."_prob_"..i
         if i == idx then
@@ -833,29 +879,30 @@ end
 
 function update_cursor()
     if (btnp(2)) then
-      menu.sel-=1
-      cx=menu.x sfx(0)
+        menu.sel -= 1
+        cx = menu.x
+        sfx(0)
     end
     if (btnp(3)) then
-      menu.sel+=1
-      cx=menu.x
+      menu.sel += 1
+      cx = menu.x
       sfx(0)
     end
     if (btnp(4)) then
-      cx=menu.x
+      cx = menu.x
       sfx(1)
     end
     if (btnp(5)) then
       sfx(2)
     end
-    if (menu.sel>menu.amt) then
-      menu.sel=1
+    if (menu.sel > menu.amt) then
+      menu.sel = 1
     end
-    if (menu.sel<=0) then
-      menu.sel=menu.amt
+    if (menu.sel <= 0) then
+      menu.sel = menu.amt
     end
 
-    cx=lerp(cx,menu.x+5,0.5)
+    cx = lerp(cx, menu.x + 5, 0.5)
 end
 
 function draw_options()
@@ -875,14 +922,14 @@ function init_menu()
     menu.x=50
     cx=menu.x
     menu.y=70
-    menu.options={"start","colors","credits"}
+    menu.options={"start", "colors", "credits"}
     menu.amt=0
     for i in all(menu.options) do
-        menu.amt+=1
+        menu.amt += 1
     end
-    menu.sel=1
-    sub_mode=0
-    menu_timer=0
+    menu.sel = 1
+    sub_mode = 0
+    menu_timer = 0
 end
 
 function init_settings()
