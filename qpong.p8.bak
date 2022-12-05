@@ -45,25 +45,27 @@ lookup["ball_y_spd_flr"]  = 0x5f8b
 lookup["ball_y_spd_rem"]  = 0x5f8c
 lookup["ball_y_spd_dir"]  = 0x5f8d
 lookup["player_1_joined"] = 0x5f8e
-lookup["player_1_y"]  = 0x5f8f
-lookup["player_1_prob_1"]  = 0x5f90
-lookup["player_1_prob_2"]  = 0x5f91
-lookup["player_1_prob_3"]  = 0x5f92
-lookup["player_1_prob_4"]  = 0x5f93
-lookup["player_1_prob_5"]  = 0x5f94
-lookup["player_1_prob_6"]  = 0x5f95
-lookup["player_1_prob_7"]  = 0x5f96
-lookup["player_1_prob_8"]  = 0x5f97
-lookup["player_2_joined"] = 0x5f98
-lookup["player_2_y"]  = 0x5f99
-lookup["player_2_prob_1"]  = 0x5f9a
-lookup["player_2_prob_2"]  = 0x5f9b
-lookup["player_2_prob_3"]  = 0x5f9c
-lookup["player_2_prob_4"]  = 0x5f9d
-lookup["player_2_prob_5"]  = 0x5f9e
-lookup["player_2_prob_6"]  = 0x5f9f
-lookup["player_2_prob_7"]  = 0x5fa0
-lookup["player_2_prob_8"]  = 0x5fa1
+lookup["player_1_shared"] = 0x5f8f
+lookup["player_1_y"]  = 0x5f90
+lookup["player_1_prob_1"]  = 0x5f91
+lookup["player_1_prob_2"]  = 0x5f92
+lookup["player_1_prob_3"]  = 0x5f93
+lookup["player_1_prob_4"]  = 0x5f94
+lookup["player_1_prob_5"]  = 0x5f95
+lookup["player_1_prob_6"]  = 0x5f96
+lookup["player_1_prob_7"]  = 0x5f97
+lookup["player_1_prob_8"]  = 0x5f98
+lookup["player_2_joined"] = 0x5f99
+lookup["player_2_shared"] = 0x5f9a
+lookup["player_2_y"]  = 0x5f9b
+lookup["player_2_prob_1"]  = 0x5f9c
+lookup["player_2_prob_2"]  = 0x5f9d
+lookup["player_2_prob_3"]  = 0x5f9e
+lookup["player_2_prob_4"]  = 0x5f9f
+lookup["player_2_prob_5"]  = 0x5fa0
+lookup["player_2_prob_6"]  = 0x5fa1
+lookup["player_2_prob_7"]  = 0x5fa2
+lookup["player_2_prob_8"]  = 0x5fa3
 
 -- nset, takes in a lookup key
 --  and a value to write to
@@ -101,7 +103,7 @@ end
 -- globals
 menu_state = "room"
 room_id = flr(rnd(100))
-win_score = 4
+win_score = 5
 scored = 1
 blink_timer = 0
 shots=255
@@ -728,6 +730,7 @@ function update_game_over()
     end
 
     if btnp(4) then
+        nset("player_"..nget("player_id").."_shared", 1)
         stop()
     end
 
@@ -765,7 +768,7 @@ function draw_game_over()
     -- restart
     if blink_timer < 40 then
         print("press  ❎  to rematch", 24, 80, 10)
-        print("press 🅾️ to quit", 24, 90, 10)
+        print("press 🅾️ to share", 24, 90, 10)
     end
 end
 
