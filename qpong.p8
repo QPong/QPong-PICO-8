@@ -731,7 +731,7 @@ function update_game_over()
 
     if btnp(4) then
         nset("player_"..nget("player_id").."_shared", 1)
-        stop()
+        --stop()
     end
 
 end
@@ -767,7 +767,7 @@ function draw_game_over()
 
     -- restart
     if blink_timer < 40 then
-        print("press  ❎  to rematch", 24, 80, 10)
+        print("press ❎ to rematch", 24, 80, 10)
         print("press 🅾️ to share", 24, 90, 10)
     end
 end
