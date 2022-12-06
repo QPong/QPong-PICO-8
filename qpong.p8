@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 29
+version 38
 __lua__
 -- qpong
 -- by qiskitters
@@ -41,6 +41,13 @@ function math.randomseed(time)
 end
 os = {}
 function os.time()
+end
+function toStr(table)
+  temp = ""
+  for j=1,#table do
+    temp = temp..tostring(table[j])..", "
+  end
+  printh("{"..temp.."}")
 end
 
 -- MicroQiskit.lua
@@ -388,8 +395,61 @@ function draw_game()
   until dash_line.y > court.bottom-1
   dash_line.y = 0 --reset
 
+  -- noise bombs
+  qubit_sprite = 0
+  for i=1,2 do
+    if bomb[i] ~= nil then
+      if bomb[i].x ~= nil and bomb[i].y ~= nil then
+        spr(bomb[i].type, bomb[i].x, bomb[i].y)
+      elseif bomb[i].start then
+        if bomb[i].type==32 then
+          if flr(bomb[i].timer/30)%2==0 then
+            composer.color = 6
+            qubit_line.color = 5
+          else
+            composer.color = 5
+            qubit_line.color = 6
+          end
+        elseif bomb[i].type==34 then
+          if flr(bomb[i].timer/30)%2==0 then
+            qubit_sprite = 0
+          else
+            qubit_sprite = 16
+          end
+        elseif bomb[i].type==35 then
+          if ismeasured then
+            composer.color = 5
+            qubit_line.color = 6
+          else
+            composer.color = 6
+            qubit_line.color = 5
+          end
+        end
+      end
+    else
+      composer.color = 6
+      qubit_line.color = 5
+    end
+  end
+
   --circuit composer
   rectfill(composer.left,composer.top,composer.right,composer.bottom,composer.color)
+
+  if istwoplayer then
+    --Bomb Inventory
+    rectfill(inventory.left,inventory.top,inventory.right,inventory.bottom,inventory.color)
+    --Different Bomb Details
+    print("inventory", 69, 90, player.color)
+    spr(bomb_details.C.sprite, bomb_details.C.x, bomb_details.C.y)
+    print(bomb_inventory[2][1], bomb_details.C.x+15, bomb_details.C.y+2, player.color)
+    spr(bomb_details.T.sprite, bomb_details.T.x, bomb_details.T.y)
+    print(bomb_inventory[2][2],bomb_details.T.x+15, bomb_details.T.y+2, player.color)
+    spr(bomb_details.G.sprite, bomb_details.G.x, bomb_details.G.y)
+    print(bomb_inventory[2][3],bomb_details.G.x+15, bomb_details.G.y+2, player.color)
+    spr(bomb_details.R.sprite, bomb_details.R.x, bomb_details.R.y)
+    print(bomb_inventory[2][4],bomb_details.R.x+15, bomb_details.R.y+2, player.color)
+  end
+
   --qubit lines
   repeat
       line(qubit_line.x,qubit_line.y,qubit_line.x+qubit_line.length,qubit_line.y,qubit_line.color)
@@ -397,9 +457,15 @@ function draw_game()
   until qubit_line.y > composer.bottom-1
   qubit_line.y = 90 --reset
 
+  for i=1,2 do
+    if bomb[i] ~= nil and bomb[i].start and bomb[i].type==33 and flr(bomb[i].timer/30)%2==0 then
+      line(qubit_line.x,qubit_line.y+(qubit_line.separation*error_qubit),qubit_line.x+qubit_line.length,qubit_line.y+(qubit_line.separation*error_qubit),6)
+    end
+  end
+
   for slot = 1, 8 do
       for wire = 1, 3 do
-          gnum = gates[wire][slot] - 2
+          gnum = qubit_sprite + gates[wire][slot] - 2
           if gnum != -1 then
               spr(gnum,
                   qubit_line.x + (slot - 1) * qubit_line.separation - 4,
@@ -470,22 +536,31 @@ function draw_game()
   --scores
   print(player_points,66,2,player.color)
   print(com_points,58,2,com.color)
+
+  for i=1,2 do
+    if bomb[i] ~= nil and bomb[i].start and bomb[i].timer%30==0 then
+      printh(bomb[i].timer)
+      probs=temp_prob
+      ismeasured = false
+    end
+  end
 end
 
 function update_game()
+
+  local bomber=-1
+  circuit_change=false
+
   if btnp(2) and cursor.row > 0 then
       cursor.row -= 1
-  end
-  if btnp(3) and cursor.row < 2 then
+  elseif btnp(3) and cursor.row < 2 then
       cursor.row += 1
-  end
-  if btnp(0) and cursor.column > 0 then
+  elseif btnp(0) and cursor.column > 0 then
       cursor.column -= 1
-  end
-  if btnp(1) and cursor.column < 7  then
+  elseif btnp(1) and cursor.column < max_columns-1  then
       cursor.column += 1
   end
-  if btnp(5) then
+  if btnp(5) and not btnp(4)then
     cur_gate = gates[cursor.row+1][cursor.column+1]
     if cur_gate==2 then
       gates[cursor.row+1][cursor.column+1]=1
@@ -493,8 +568,8 @@ function update_game()
       gates[cursor.row+1][cursor.column+1]=2
     end
     sim_cir()
-  end
-  if btnp(4) then
+    circuit_change=true
+  elseif btnp(4) and not btnp(5) then
     cur_gate = gates[cursor.row+1][cursor.column+1]
     if cur_gate==5 then
       gates[cursor.row+1][cursor.column+1]=1
@@ -502,6 +577,13 @@ function update_game()
       gates[cursor.row+1][cursor.column+1]=5
     end
     sim_cir()
+    circuit_change=true
+  end
+  for i=1,2 do
+    if (bomb[i] ~= nil and bomb[i].start) and (bomb[i].timer%30==0 or circuit_change) then
+      toStr(probs)
+      activate_bomb(i)
+    end
   end
 
   --computer controls
@@ -572,14 +654,167 @@ function update_game()
           if probs[i] == 1 then
               beg = 10 * (i - 1)
               player.y = beg
+              ismeasured = true
           end
       end
   elseif ball.x < court.edge and counter > 0 then
     counter-=1
     if counter==0 then
       sim_cir()
+      for i=1,2 do
+        if bomb[i] ~= nil and bomb[i].start then
+          toStr(probs)
+          activate_bomb(i)
+        end
+      end
     end
   end
+
+  -- Noise Bombs
+  function activate_bomb(bomber)
+    if bomb[bomber] ~= nil then
+      local probab
+      probab = probs -- For multiplayer, replace this with probab = probs[(bomber)%2+1]
+      local new_probs = {0, 0, 0, 0, 0, 0, 0, 0}
+      local probab_sum = 0
+      if bomb[bomber].type == 32 then
+        temp_prob = probs
+        error = ceil(bomb[bomber].timer/30)/20
+        for i=1,8 do
+          new_probs[i] = probab[9-i]*error + probab[i]*(1-error)
+          probab_sum += new_probs[i]
+        end
+      elseif bomb[bomber].type == 33 then
+        if error_qubit == -1 then
+          error_qubit = math.floor(math.random()*3)
+        end
+        error = math.random()/2
+        for i=0,7 do
+          state = i ~ (1<<(error_qubit))
+          new_probs[i+1] = probab[state+1]*error + probab[i+1]*(1-error)
+          probab_sum += new_probs[i+1]
+        end
+      elseif bomb[bomber].type == 34 then
+        error = math.random()/5
+        for q=1,8 do
+          new_probs[q] = probab[q]
+        end
+        for i=1,3 do
+          for j=1,max_columns do
+            if gates[i][j] == 2 then
+              for k=0,7 do
+                if probab[k+1] > 0 then
+                  state = k ~ (1<<(i-1))
+                  new_probs[state+1] = new_probs[k+1]*error + new_probs[state+1]*(1-error) 
+                end
+              end
+            end
+          end
+        end
+        for q=1,8 do
+          probab_sum += new_probs[q]
+        end
+      else
+        error = math.random()/4
+        for i=1,8 do
+          if probab[i] > 0 then
+            new_probs[i] += probab[i]*(1-error)
+            for j=0,2 do
+              state = (i-1) ~ (1 << j)
+              printh("State: "..state)
+              new_probs[state+1] += probab[i]*(error/3)
+            end
+          end
+        end
+        for i=1,8 do
+          probab_sum += new_probs[i]
+        end
+      end
+      for i=1,8 do
+          new_probs[i] = new_probs[i]/probab_sum
+      end
+      printh("New Probs")
+      toStr(new_probs)
+      probs = new_probs
+    end
+  end
+    
+  -- Noise Bomb drop
+
+  if istwoplayer then
+    if btnp(5,0) and btnp(4,0) and bomb[1] == nil then
+      if btnp(0,0) then
+        bomb_type = 1
+      elseif btnp(1,0) then
+        bomb_type = 2
+      elseif btnp(2,0) then
+        bomb_type = 3
+      elseif btnp(3,0) then
+        bomb_type = 4
+      end
+      bomber = 1
+    elseif btnp(5,1) and btnp(4,1) and bomb[2] == nil then
+      if btnp(0,1) then
+        bomb_type = 1
+      elseif btnp(1,1) then
+        bomb_type = 2
+      elseif btnp(2,1) then
+        bomb_type = 3
+      elseif btnp(3,1) then
+        bomb_type = 4
+      end
+      bomber = 2
+    end
+  else
+    if ceil(math.random()*50)%50==0 and bomb[2]==nil then
+      bomb_type = ceil(math.random()*4)
+      bomber = 2
+      bomb_inventory[bomber][bomb_type] += 1
+    end
+  end
+
+  if bomber~= -1 and bomb_inventory[bomber][bomb_type] > 0 then
+    local mid = math.floor(court.right/2)
+    bomb[bomber] = {
+        type = 31+bomb_type,
+        x = math.floor(mid*((bomber-1)%2) + (90-mid)*math.random()),
+        y = math.floor(rnd(court.bottom-8)),
+        timer = 20*30,
+        start = false
+    }
+    bomb_inventory[bomber][bomb_type] -= 1
+  end
+
+  -- Collision with the noise bomb
+
+  for i=1,2 do
+    if bomb[i] ~= nil then
+      if bomb[i].x ~= nil and bomb[i].y ~= nil then
+        if (ball.x >= bomb[i].x and ball.x <= bomb[i].x+8 and ball.y >= bomb[i].y and ball.y <= bomb[i].y+8) or (btnp(5) and btnp(4))then
+          printh("Type: "..bomb[i].type)
+          bomb[i].start = true
+          bomb[i].x = nil
+          bomb[i].y = nil
+          sfx(6)
+          temp_prob = probs
+          break
+        end
+      end
+    end
+  end
+
+  -- Countdown timer
+
+  for i=1,2 do
+    if bomb[i] ~= nil then
+      if bomb[i].timer<=0 then
+        bomb[i] = nil
+      elseif bomb[i].start then
+        bomb[i].timer -= 1
+      end
+    end
+  end
+
   ------------------------
 
   --collide with player
@@ -604,7 +839,10 @@ function new_game()
     com_points = 0
     scored = ""
     blink_timer = 0
-
+    max_columns = 8
+    error_qubit = -1
+    ismeasured = false
+    istwoplayer = false
     --variables
     counter=0
     player={
@@ -641,9 +879,22 @@ function new_game()
         {1,1,1,1,1,1,1,1},
         {1,1,1,1,1,1,1,1}
     }
+    -- Different types of Noise bombs available to the players.
+    -- Currently three types of noise bombs are available
+    -- Cosmic Noise Bomb = 1
+    -- Thermal Noise Bomb = 2
+    -- Gate Noise Bomb = 3
+    -- Readout Noise Bomb = 4
+    bomb_inventory={
+      {0,0,0,0},
+      {0,0,0,0}
+    }
+    -- Activated bomb by the user
+    bomb = {}
     -- Relative frequency of the measurement results
     -- Obtained from simulator
     probs = {1, 0, 0, 0, 0, 0, 0, 0}
+    temp_prob = {1, 0, 0, 0, 0, 0, 0, 0}
   --probs={0.5, 0.5, 0, 0, 0, 0, 0, 0}
   --meas_probs={1, 0, 0, 0, 0, 0, 0, 0}
 
@@ -655,7 +906,7 @@ function new_game()
         column=0,
         x=0,
         y=0,
-        sprite=16
+        sprite=8
     }
     --sound
     if scored=="player" then
@@ -696,6 +947,40 @@ function new_game()
         separation=15,
         color=5
     }
+    inventory={
+      left=64,
+      right=127,
+      top=83,
+      bottom=127,
+      color=0
+    }
+    bomb_details={
+      C={
+        sprite=32,
+        x=69,
+        y=101
+      },
+      T={
+        sprite=33,
+        x=95,
+        y=101
+      },
+      G={
+        sprite=34,
+        x=69,
+        y=116
+      },
+      R={
+        sprite=35,
+        x=95,
+        y=116
+      }
+    }
+    if istwoplayer then
+      max_columns = 4
+      composer.right = 63
+      qubit.length = 51
+    end  
     new_round()
 end
 
@@ -972,30 +1257,30 @@ function pico8_palette()
 end
 
 __gfx__
-77777771777777717777777177777771000000000000000010000000010000000000000000000000000000000000000000000000000000000000000000000000
-71777171717771717111117171777171011000000010000010000000001000000000000000000000000000000000000000000000000000000000000000000000
-77171771771717717777177171777171100100000110000010000000001000000000000000000000000000000000000000000000000000000000000000000000
-77717771777177717771777171111171100100000010000010000000000100000000000000000000000000000000000000000000000000000000000000000000
-77171771777177717717777171777171100100000010000010000000000100000000000000000000000000000000000000000000000000000000000000000000
-71777171777177717111117171777171011000000010000010000000001000000000000000000000000000000000000000000000000000000000000000000000
-77777771777777717777777177777771000000000000000010000000001000000000000000000000000000000000000000000000000000000000000000000000
-11111111111111111111111111111111000000000000000010000000010000000000000000000000000000000000000000000000000000000000000000000000
-c0c0c0c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0c0c0c0c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+7777777177777771777777717777777100000000000000001000000001000000c0c0c0c000000000000000000000000000000000000000000000000000000000
+71777171717771717111117171777171011000000010000010000000001000000000000c00000000000000000000000000000000000000000000000000000000
+7717177177171771777717717177717110010000011000001000000000100000c000000000000000000000000000000000000000000000000000000000000000
+77717771777177717771777171111171100100000010000010000000000100000000000c00000000000000000000000000000000000000000000000000000000
+7717177177717771771777717177717110010000001000001000000000010000c000000000000000000000000000000000000000000000000000000000000000
+71777171777177717111117171777171011000000010000010000000001000000000000c00000000000000000000000000000000000000000000000000000000
+7777777177777771777777717777777100000000000000001000000000100000c000000000000000000000000000000000000000000000000000000000000000
+11111111111111111111111111111111000000000000000010000000010000000c0c0c0c00000000000000000000000000000000000000000000000000000000
+ddddddd1000000000000000077777771000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+d7ddd7d1000000000000000071777171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+dd7d7dd1000000000000000071777171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ddd7ddd1000000000000000071111171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+dd7d7dd1000000000000000071777171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+d7ddd7d1000000000000000071777171000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ddddddd1000000000000000077777771000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+11111111000000000000000011111111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00d6660a00d6660a00d6660a00d6660a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0d6677600d6677600d6677600d667760000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+dd600076dd600076dd600076dd000776000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ddd06676ddd60676dd066676dd066076000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+5dd066665ddd06665d0d00665d000666000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+55d0dddd55dd0ddd550dd0dd550dd0dd000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+055000d005550dd0055000d00505d0d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00555500005555000055550000555500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
